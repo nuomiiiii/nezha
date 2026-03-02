@@ -90,7 +90,6 @@ export const fetchMonitor = async (server_id: number, hours: number = 24): Promi
         server_name: serverName,
         created_at: [],
         avg_delay: [],
-        packet_loss: [task.loss??0],
       })
     }
 
