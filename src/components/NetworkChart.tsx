@@ -13,6 +13,7 @@ import { Area, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts
 
 import NetworkChartLoading from "./NetworkChartLoading"
 import { Label } from "./ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { Switch } from "./ui/switch"
 
 interface ResultItem {
@@ -77,12 +78,23 @@ const calculatePacketLoss = (delays: number[]): number[] => {
   return packetLossRates.map((rate) => Number(rate.toFixed(2)))
 }
 
+const TIME_OPTIONS = [
+  { value: "1", label: "1h" },
+  { value: "6", label: "6h" },
+  { value: "12", label: "12h" },
+  { value: "24", label: "24h" },
+  { value: "72", label: "3d" },
+  { value: "168", label: "7d" },
+  { value: "720", label: "30d" },
+]
+
 export function NetworkChart({ server_id, show }: { server_id: number; show: boolean }) {
   const { t } = useTranslation()
+  const [hours, setHours] = React.useState(24)
 
   const { data: monitorData } = useQuery({
-    queryKey: ["monitor", server_id],
-    queryFn: () => fetchMonitor(server_id),
+    queryKey: ["monitor", server_id, hours],
+    queryFn: () => fetchMonitor(server_id, hours),
     enabled: show,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
@@ -128,6 +140,8 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
       chartData={transformedData}
       serverName={monitorData.data[0].server_name}
       formattedData={formattedData}
+      hours={hours}
+      onHoursChange={setHours}
     />
   )
 }
@@ -138,12 +152,16 @@ export const NetworkChartClient = React.memo(function NetworkChart({
   chartData,
   serverName,
   formattedData,
+  hours,
+  onHoursChange,
 }: {
   chartDataKey: string[]
   chartConfig: ChartConfig
   chartData: ServerMonitorChart
   serverName: string
   formattedData: ResultItem[]
+  hours: number
+  onHoursChange: (hours: number) => void
 }) {
   const { t } = useTranslation()
 
@@ -394,11 +412,25 @@ export const NetworkChartClient = React.memo(function NetworkChart({
           <CardDescription className="text-xs">
             {chartDataKey.length} {t("monitor.monitorCount")}
           </CardDescription>
-          <div className="flex items-center mt-0.5 space-x-2">
-            <Switch id="Peak" checked={isPeakEnabled} onCheckedChange={setIsPeakEnabled} />
-            <Label className="text-xs" htmlFor="Peak">
-              Peak cut
-            </Label>
+          <div className="flex items-center mt-0.5 space-x-3">
+            <Select value={String(hours)} onValueChange={(v) => onHoursChange(Number(v))}>
+              <SelectTrigger className="w-[70px] h-7 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TIME_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex items-center space-x-2">
+              <Switch id="Peak" checked={isPeakEnabled} onCheckedChange={setIsPeakEnabled} />
+              <Label className="text-xs" htmlFor="Peak">
+                Peak cut
+              </Label>
+            </div>
           </div>
         </div>
         <div className="flex flex-wrap w-full">{chartButtons}</div>
