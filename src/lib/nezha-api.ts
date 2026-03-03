@@ -99,7 +99,8 @@ export const fetchMonitor = async (server_id: number, hours: number = 24): Promi
       const ts = Date.parse(rec.time)
       if (!Number.isFinite(ts)) continue
       const val = Number(rec.value)
-      if (!Number.isFinite(val) || val === -1) continue
+      if (!Number.isFinite(val)) continue
+      // 保留 -1（丢包）记录，用于计算真实丢包率
       s.created_at.push(ts)
       s.avg_delay.push(val)
     }
@@ -122,7 +123,7 @@ export const fetchMonitor = async (server_id: number, hours: number = 24): Promi
       const ts = Date.parse(rec.time)
       if (!Number.isFinite(ts)) continue
       const val = Number(rec.value)
-      if (!Number.isFinite(val) || val === -1) continue
+      if (!Number.isFinite(val)) continue
       s.created_at.push(ts)
       s.avg_delay.push(val)
     }
@@ -130,18 +131,48 @@ export const fetchMonitor = async (server_id: number, hours: number = 24): Promi
     // 未知结构，返回空
   }
 
-  // 每个序列按时间升序
+  // 每个序列按时间升序，并计算真实丢包率
   const data = Array.from(seriesByTask.values()).map((s) => {
     const zip = s.created_at.map((t, i) => ({ t, v: s.avg_delay[i] }))
     zip.sort((a, b) => a.t - b.t)
-    return { ...s, created_at: zip.map((z) => z.t), avg_delay: zip.map((z) => z.v) }
+
+    const rawVals = zip.map((z) => z.v)
+
+    // 计算真实丢包率：基于滑动窗口内 -1（失败）记录的比例
+    const windowSize = Math.max(5, Math.min(30, Math.ceil(rawVals.length / 50)))
+    const packetLoss: number[] = rawVals.map((_, i) => {
+      const start = Math.max(0, i - Math.floor(windowSize / 2))
+      const end = Math.min(rawVals.length, i + Math.ceil(windowSize / 2))
+      const window = rawVals.slice(start, end)
+      const lostCount = window.filter((v) => v === -1).length
+      return Number(((lostCount / window.length) * 100).toFixed(2))
+    })
+
+    // 对延迟数据：将 -1 替换为上一个正常值（平滑显示）
+    const delays: number[] = []
+    let lastGood = 0
+    for (const v of rawVals) {
+      if (v >= 0) {
+        lastGood = v
+        delays.push(v)
+      } else {
+        delays.push(lastGood)
+      }
+    }
+
+    return {
+      ...s,
+      created_at: zip.map((z) => z.t),
+      avg_delay: delays,
+      packet_loss: packetLoss,
+    }
   })
 
   // 避免空的 avg_delay
   for (const s of data) {
-    if (s.avg_delay.length == 0) {
-      s.packet_loss = seriesByTask.get(s.monitor_id)?.packet_loss || [0]
-      s.avg_delay = [-1]
+    if (s.created_at.length === 0) {
+      s.avg_delay = [0]
+      s.packet_loss = [0]
       s.created_at = [Date.now()]
     }
   }
