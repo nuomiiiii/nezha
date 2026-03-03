@@ -69,12 +69,11 @@ export const fetchMonitor = async (server_id: number, hours: number = 24): Promi
   }
   const serverName = km_nodes[uuid]?.name || String(server_id)
 
-  const maxCount = hours <= 24 ? 2000 : hours <= 168 ? 3000 : 4000
-
+  // maxCount: -1 获取全量数据，确保丢包记录不会被后端采样丢弃
   const km_monitors: any = await SharedClient().call("common:getRecords", {
     type: "ping",
     uuid: uuid,
-    maxCount,
+    maxCount: -1,
     hours,
   })
 
@@ -160,9 +159,49 @@ export const fetchMonitor = async (server_id: number, hours: number = 24): Promi
       }
     }
 
+    const timestamps = zip.map((z) => z.t)
+
+    // 前端降采样：保留所有丢包点及邻近点，均匀抽稀正常点
+    const targetPoints = hours <= 24 ? 2000 : hours <= 168 ? 3000 : 4000
+    if (timestamps.length > targetPoints) {
+      const keepSet = new Set<number>()
+      keepSet.add(0)
+      keepSet.add(timestamps.length - 1)
+
+      // 保留所有丢包点及前后各 3 个邻近点（确保 EMA 曲线完整）
+      for (let i = 0; i < rawVals.length; i++) {
+        if (rawVals[i] === -1) {
+          for (let j = Math.max(0, i - 3); j <= Math.min(timestamps.length - 1, i + 6); j++) {
+            keepSet.add(j)
+          }
+        }
+      }
+
+      // 剩余配额均匀分配给正常点
+      const normalTarget = targetPoints - keepSet.size
+      if (normalTarget > 0) {
+        const normalIndices: number[] = []
+        for (let i = 0; i < timestamps.length; i++) {
+          if (!keepSet.has(i)) normalIndices.push(i)
+        }
+        const step = Math.max(1, Math.floor(normalIndices.length / normalTarget))
+        for (let i = 0; i < normalIndices.length && keepSet.size < targetPoints; i += step) {
+          keepSet.add(normalIndices[i])
+        }
+      }
+
+      const kept = Array.from(keepSet).sort((a, b) => a - b)
+      return {
+        ...s,
+        created_at: kept.map((i) => timestamps[i]),
+        avg_delay: kept.map((i) => delays[i]),
+        packet_loss: kept.map((i) => packetLoss[i]),
+      }
+    }
+
     return {
       ...s,
-      created_at: zip.map((z) => z.t),
+      created_at: timestamps,
       avg_delay: delays,
       packet_loss: packetLoss,
     }
