@@ -56,8 +56,12 @@ export const ServiceTrackerClient: React.FC<ServiceTrackerProps> = ({ days, clas
           <span className="font-medium text-sm">{title}</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className={cn("font-medium text-sm transition-colors", getDelayColor(avgDelay))}>{avgDelay.toFixed(0)}ms</span>
-          <Separator className="h-4" orientation="vertical" />
+          {avgDelay > 0 && (
+            <>
+              <span className={cn("font-medium text-sm transition-colors", getDelayColor(avgDelay))}>{avgDelay.toFixed(0)}ms</span>
+              <Separator className="h-4" orientation="vertical" />
+            </>
+          )}
           <span className={cn("font-medium text-sm transition-colors", getUptimeColor(uptime))}>
             {uptime.toFixed(1)}% {t("serviceTracker.uptime")}
           </span>
@@ -88,6 +92,7 @@ export const ServiceTrackerClient: React.FC<ServiceTrackerProps> = ({ days, clas
                       <span className="text-xs text-muted-foreground">{t("serviceTracker.uptime")}:</span>
                       <span className={cn("text-xs font-medium", day.uptime > 95 ? "text-green-500" : "text-red-500")}>{day.uptime.toFixed(1)}%</span>
                     </div>
+                    {day.delay > 0 && (
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-xs text-muted-foreground">{t("serviceTracker.delay")}:</span>
                       <span
@@ -99,6 +104,7 @@ export const ServiceTrackerClient: React.FC<ServiceTrackerProps> = ({ days, clas
                         {day.delay.toFixed(0)}ms
                       </span>
                     </div>
+                    )}
                   </div>
                 </div>
               </TooltipContent>

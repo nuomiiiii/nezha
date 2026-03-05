@@ -218,6 +218,87 @@ export const fetchMonitor = async (server_id: number, hours: number = 24): Promi
 
   return { success: true, data }
 }
+export const fetchServerUptime = async (): Promise<ServiceResponse> => {
+  const kmNodes: Record<string, any> = await getKomariNodes()
+
+  // 一次查询所有服务器的 load 记录（按 UUID 分组），用于判断服务器在线状态
+  const result: any = await SharedClient().call("common:getRecords", {
+    type: "load",
+    load_type: "cpu",
+    hours: 720,
+    maxCount: -1,
+  })
+
+  const records: Record<string, any[]> = result?.records || {}
+  const now = Date.now()
+  const DAY_MS = 24 * 60 * 60 * 1000
+  const HOUR_MS = 60 * 60 * 1000
+  const todayElapsedHours = new Date().getHours() + 1
+
+  const services: Record<string, ServiceData> = {}
+
+  for (const [uuid, clientRecords] of Object.entries(records)) {
+    const serverName = kmNodes[uuid]?.name || uuid
+    const serverId = uuidToNumber(uuid)
+
+    const up = new Array(30).fill(0)
+    const down = new Array(30).fill(0)
+    const delay = new Array(30).fill(0)
+
+    for (let dayIdx = 0; dayIdx < 30; dayIdx++) {
+      const dayStart = now - (30 - dayIdx) * DAY_MS
+      const dayEnd = dayStart + DAY_MS
+
+      // 统计当天每个小时是否有记录
+      const hoursWithRecords = new Set<number>()
+      for (const rec of clientRecords) {
+        const ts = Date.parse(rec.time)
+        if (ts >= dayStart && ts < dayEnd) {
+          hoursWithRecords.add(Math.floor((ts - dayStart) / HOUR_MS))
+        }
+      }
+
+      // 今天只算已过去的小时数
+      const expectedHours = dayIdx === 29 ? todayElapsedHours : 24
+      up[dayIdx] = hoursWithRecords.size
+      down[dayIdx] = Math.max(0, expectedHours - hoursWithRecords.size)
+    }
+
+    services[String(serverId)] = {
+      service_name: serverName,
+      current_up: up[29] > 0 ? 1 : 0,
+      current_down: up[29] === 0 ? 1 : 0,
+      total_up: up.reduce((a, b) => a + b, 0),
+      total_down: down.reduce((a, b) => a + b, 0),
+      delay,
+      up,
+      down,
+    }
+  }
+
+  // 补充没有 load 记录但存在于节点列表中的服务器（全部离线）
+  for (const [uuid] of Object.entries(kmNodes)) {
+    const serverId = uuidToNumber(uuid)
+    if (!services[String(serverId)]) {
+      services[String(serverId)] = {
+        service_name: kmNodes[uuid]?.name || uuid,
+        current_up: 0,
+        current_down: 1,
+        total_up: 0,
+        total_down: 720,
+        delay: new Array(30).fill(0),
+        up: new Array(30).fill(0),
+        down: new Array(30).fill(24),
+      }
+    }
+  }
+
+  return {
+    success: true,
+    data: { services, cycle_transfer_stats: {} },
+  }
+}
+
 export const fetchService = async (): Promise<ServiceResponse> => {
   // 获取所有节点 uuid，逐个查询 ping 记录后合并
   const kmNodes: Record<string, any> = await getKomariNodes()
