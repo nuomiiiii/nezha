@@ -1,4 +1,4 @@
-import { fetchServerUptime } from "@/lib/nezha-api"
+import { fetchService } from "@/lib/nezha-api"
 import { NezhaServer, ServiceData } from "@/types/nezha-api"
 import { ExclamationTriangleIcon } from "@heroicons/react/20/solid"
 import { useQuery } from "@tanstack/react-query"
@@ -11,8 +11,8 @@ import { Loader } from "./loading/Loader"
 export function ServiceTracker({ serverList }: { serverList: NezhaServer[] }) {
   const { t } = useTranslation()
   const { data: serviceData, isLoading } = useQuery({
-    queryKey: ["server-uptime"],
-    queryFn: () => fetchServerUptime(),
+    queryKey: ["service"],
+    queryFn: () => fetchService(),
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     refetchInterval: 10000,
