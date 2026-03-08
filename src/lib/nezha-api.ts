@@ -300,16 +300,37 @@ export const fetchServerUptime = async (): Promise<ServiceResponse> => {
 }
 
 export const fetchService = async (): Promise<ServiceResponse> => {
-  // 单次 RPC 调用获取所有节点的 ping 记录（uuid 留空 = 全部）
-  // 使用 HTTP 而非 WebSocket，避免重查询阻塞实时状态连接
-  const result = await SharedClient().callViaHTTP("common:getRecords", {
-    type: "ping",
-    hours: 720,
-    maxCount: 3000,
-  })
+  // 按 UUID 逐个查询，使用 HTTP 避免阻塞 WebSocket
+  // 每次查询单个 UUID 数据量小，不会拖慢后端
+  const kmNodes: Record<string, any> = await getKomariNodes()
+  const uuids = Object.keys(kmNodes || {})
 
-  const allTasks: any[] = result?.tasks || []
-  const allRecords: any[] = result?.records || []
+  let allTasks: any[] = []
+  let allRecords: any[] = []
+  const seenTaskIds = new Set<number>()
+
+  // 逐个查询，避免并发请求压垮后端
+  for (const uuid of uuids) {
+    try {
+      const result = await SharedClient().callViaHTTP("common:getRecords", {
+        type: "ping",
+        uuid,
+        hours: 720,
+        maxCount: 1000,
+      })
+      const tasks: any[] = result?.tasks || []
+      const records: any[] = result?.records || []
+      for (const t of tasks) {
+        if (!seenTaskIds.has(t.id)) {
+          seenTaskIds.add(t.id)
+          allTasks.push(t)
+        }
+      }
+      allRecords = allRecords.concat(records)
+    } catch {
+      // 单个节点失败不影响整体
+    }
+  }
 
   const services: Record<string, ServiceData> = {}
   const now = Date.now()

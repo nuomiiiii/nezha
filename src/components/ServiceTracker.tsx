@@ -26,8 +26,9 @@ export function ServiceTracker({ serverList }: { serverList: NezhaServer[] }) {
     queryKey: ["service"],
     queryFn: () => fetchService(),
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    refetchInterval: 10000,
+    refetchOnWindowFocus: false,
+    refetchInterval: 600000, // 10分钟刷新一次，30天数据变化缓慢
+    staleTime: 300000, // 5分钟内不重复请求
   })
 
   const { data: userData } = useQuery({
