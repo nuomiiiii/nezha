@@ -384,6 +384,22 @@ export const fetchService = async (): Promise<ServiceResponse> => {
   }
 }
 
+export const updateThemeSetting = async (key: string, value: unknown): Promise<void> => {
+  const win = window as unknown as Record<string, unknown>
+  const current = (win.__themeSettings as Record<string, unknown>) || {}
+  const updated = { ...current, [key]: value }
+  const res = await fetch(`/api/admin/theme/settings?theme=nezha-BITJEBE`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(updated),
+  })
+  if (!res.ok) throw new Error("Failed to update theme settings")
+  // 同步本地状态
+  win.__themeSettings = updated
+  win[key] = value
+}
+
 export const fetchSetting = async (): Promise<SettingResponse> => {
   const km_public = await SharedClient().call("common:getPublicInfo")
   if (km_public.error) {
@@ -392,6 +408,7 @@ export const fetchSetting = async (): Promise<SettingResponse> => {
   // Apply managed theme configuration to window.* variables
   const themeSettings = km_public.theme_settings
   if (themeSettings && typeof themeSettings === "object") {
+    ;(window as unknown as Record<string, unknown>).__themeSettings = { ...themeSettings }
     for (const [key, value] of Object.entries(themeSettings)) {
       ;(window as unknown as Record<string, unknown>)[key] = value
     }

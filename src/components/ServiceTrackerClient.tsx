@@ -16,9 +16,10 @@ interface ServiceTrackerProps {
   title?: string
   uptime?: number
   avgDelay?: number
+  totalDays?: number
 }
 
-export const ServiceTrackerClient: React.FC<ServiceTrackerProps> = ({ days, className, title, uptime = 100, avgDelay = 0 }) => {
+export const ServiceTrackerClient: React.FC<ServiceTrackerProps> = ({ days, className, title, uptime = 100, avgDelay = 0, totalDays }) => {
   const { t } = useTranslation()
   const customBackgroundImage = (window.CustomBackgroundImage as string) !== "" ? window.CustomBackgroundImage : undefined
 
@@ -108,7 +109,7 @@ export const ServiceTrackerClient: React.FC<ServiceTrackerProps> = ({ days, clas
       </div>
 
       <div className="flex justify-between text-xs text-stone-500 dark:text-stone-400">
-        <span>30 {t("serviceTracker.daysAgo")}</span>
+        <span>{totalDays ?? 30} {t("serviceTracker.daysAgo")}</span>
         <span>{t("serviceTracker.today")}</span>
       </div>
     </div>

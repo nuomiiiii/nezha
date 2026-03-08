@@ -40,18 +40,10 @@ export default function TrafficBar({ used, limit, expiredAt, limitType }: Traffi
   const [fading, setFading] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  useEffect(() => {
-    timerRef.current = setInterval(() => {
-      setFading(true)
-      setTimeout(() => {
-        setInfoIndex((prev) => (prev + 1) % 3)
-        setFading(false)
-      }, 500)
-    }, 3000)
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
-    }
-  }, [])
+  const win = window as unknown as Record<string, unknown>
+  const showPercent = win.TrafficBarShowPercent !== false
+  const showResetDay = win.TrafficBarShowResetDay !== false
+  const showBillingMode = win.TrafficBarShowBillingMode !== false
 
   if (limit <= 0) return null
 
@@ -61,11 +53,31 @@ export default function TrafficBar({ used, limit, expiredAt, limitType }: Traffi
   const limitFormatted = formatBytes(limit)
   const resetDays = calcResetDays(expiredAt)
 
-  const infoItems = [
-    `${percentStr}%`,
-    `流量重置: ${resetDays}`,
-    `计费: ${getTypeLabel(limitType)}`,
-  ]
+  // 根据设置构建要显示的信息项
+  const infoItems: string[] = []
+  if (showPercent) infoItems.push(`${percentStr}%`)
+  if (showResetDay) infoItems.push(`流量重置: ${resetDays}`)
+  if (showBillingMode) infoItems.push(`计费: ${getTypeLabel(limitType)}`)
+
+  const shouldCycle = infoItems.length > 1
+
+  useEffect(() => {
+    if (!shouldCycle) {
+      if (timerRef.current) clearInterval(timerRef.current)
+      timerRef.current = null
+      return
+    }
+    timerRef.current = setInterval(() => {
+      setFading(true)
+      setTimeout(() => {
+        setInfoIndex((prev) => (prev + 1) % infoItems.length)
+        setFading(false)
+      }, 500)
+    }, 3000)
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [shouldCycle, infoItems.length])
 
   return (
     <div className="space-y-1.5 w-full">
@@ -78,12 +90,20 @@ export default function TrafficBar({ used, limit, expiredAt, limitType }: Traffi
             / {limitFormatted}
           </span>
         </div>
-        <div
-          className="text-[10px] font-medium text-neutral-600 dark:text-neutral-300 transition-opacity duration-500"
-          style={{ opacity: fading ? 0 : 1 }}
-        >
-          {infoItems[infoIndex]}
-        </div>
+        {infoItems.length > 0 && (
+          shouldCycle ? (
+            <div
+              className="text-[10px] font-medium text-neutral-600 dark:text-neutral-300 transition-opacity duration-500"
+              style={{ opacity: fading ? 0 : 1 }}
+            >
+              {infoItems[infoIndex % infoItems.length]}
+            </div>
+          ) : (
+            <span className="text-[10px] font-medium text-neutral-600 dark:text-neutral-300">
+              {infoItems[0]}
+            </span>
+          )
+        )}
       </div>
       <div className="relative h-1.5 w-full">
         <div className="absolute inset-0 bg-neutral-100 dark:bg-neutral-800 rounded-full" />

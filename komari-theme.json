@@ -2,7 +2,7 @@
     "name": "nezha-BITJEBE",
     "short": "nezha-BITJEBE",
     "description": "nezha-BITJEBE Theme for Komari Monitor",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "author": "BITJEBE",
     "url": "https://github.com/BITJEBE/nezha-BITJEBE",
     "preview": "preview.png",
@@ -108,7 +108,50 @@
                 "type": "switch",
                 "default": false,
                 "help": "开启后网络流量图表会自动裁剪异常峰值，使图表更易读。"
-            }
+            },
+            {
+                "name": "卡片显示设置",
+                "type": "title"
+            },
+            {
+                "key": "FixedTopServerName",
+                "name": "固定顶部服务器名称",
+                "type": "switch",
+                "default": false,
+                "help": "开启后服务器名称固定在卡片顶部，资源信息显示在下方。"
+            },
+            {
+                "key": "ShowNetTransfer",
+                "name": "显示上下行流量",
+                "type": "switch",
+                "default": false,
+                "help": "开启后在服务器卡片底部显示上传和下载总流量。"
+            },
+            {
+                "name": "流量进度条设置",
+                "type": "title"
+            },
+            {
+                "key": "TrafficBarShowPercent",
+                "name": "显示百分比",
+                "type": "switch",
+                "default": true,
+                "help": "在流量进度条右上角显示已用百分比。"
+            },
+            {
+                "key": "TrafficBarShowResetDay",
+                "name": "显示流量重置日",
+                "type": "switch",
+                "default": true,
+                "help": "在流量进度条右上角显示距离流量重置的天数。"
+            },
+            {
+                "key": "TrafficBarShowBillingMode",
+                "name": "显示计费模式",
+                "type": "switch",
+                "default": true,
+                "help": "在流量进度条右上角显示计费模式（双向/单向等）。"
+            },
         ]
     }
 }
