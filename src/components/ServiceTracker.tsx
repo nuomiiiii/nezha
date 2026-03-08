@@ -3,8 +3,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { fetchLoginUser, fetchService, updateThemeSetting } from "@/lib/nezha-api"
 import { NezhaServer, ServiceData } from "@/types/nezha-api"
 import { ExclamationTriangleIcon } from "@heroicons/react/20/solid"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { Settings2 } from "lucide-react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { CycleTransferStatsCard } from "./CycleTransferStats"
@@ -19,7 +20,7 @@ function getHiddenServices(): string[] {
 
 export function ServiceTracker({ serverList }: { serverList: NezhaServer[] }) {
   const { t } = useTranslation()
-  const queryClient = useQueryClient()
+  const [hiddenServices, setHiddenServices] = useState<string[]>(getHiddenServices)
 
   const { data: serviceData, isLoading } = useQuery({
     queryKey: ["service"],
@@ -39,19 +40,15 @@ export function ServiceTracker({ serverList }: { serverList: NezhaServer[] }) {
 
   const isLoggedIn = !!userData?.data?.id
 
-  const hiddenServices = getHiddenServices()
-
-  const toggleService = async (name: string) => {
-    const current = getHiddenServices()
-    const next = current.includes(name) ? current.filter((n) => n !== name) : [...current, name]
-    try {
-      await updateThemeSetting("ServiceTrackerHidden", next)
-      // 刷新设置和服务数据
-      queryClient.invalidateQueries({ queryKey: ["setting"] })
-      queryClient.invalidateQueries({ queryKey: ["service"] })
-    } catch (e) {
-      console.error("Failed to update service filter:", e)
-    }
+  const toggleService = (name: string) => {
+    const next = hiddenServices.includes(name) ? hiddenServices.filter((n) => n !== name) : [...hiddenServices, name]
+    // 乐观更新：立即更新 UI
+    setHiddenServices(next)
+    ;(window as unknown as Record<string, unknown>).ServiceTrackerHidden = next
+    // 后台异步保存到服务端
+    updateThemeSetting("ServiceTrackerHidden", next).catch((e) => {
+      console.error("Failed to save service filter:", e)
+    })
   }
 
   const processServiceData = (serviceData: ServiceData) => {
