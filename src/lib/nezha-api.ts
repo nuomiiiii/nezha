@@ -301,7 +301,8 @@ export const fetchServerUptime = async (): Promise<ServiceResponse> => {
 
 export const fetchService = async (): Promise<ServiceResponse> => {
   // 单次 RPC 调用获取所有节点的 ping 记录（uuid 留空 = 全部）
-  const result = await SharedClient().call("common:getRecords", {
+  // 使用 HTTP 而非 WebSocket，避免重查询阻塞实时状态连接
+  const result = await SharedClient().callViaHTTP("common:getRecords", {
     type: "ping",
     hours: 720,
     maxCount: 3000,
