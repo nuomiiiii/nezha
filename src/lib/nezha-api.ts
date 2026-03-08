@@ -300,52 +300,30 @@ export const fetchServerUptime = async (): Promise<ServiceResponse> => {
 }
 
 export const fetchService = async (): Promise<ServiceResponse> => {
-  // 获取所有节点 uuid，逐个查询 ping 记录后合并
-  const kmNodes: Record<string, any> = await getKomariNodes()
-  const uuids = Object.keys(kmNodes || {})
+  // 单次 RPC 调用获取所有节点的 ping 记录（uuid 留空 = 全部）
+  const result = await SharedClient().call("common:getRecords", {
+    type: "ping",
+    hours: 720,
+    maxCount: 3000,
+  })
 
-  // 收集所有节点的 tasks 和 records
-  let allTasks: any[] = []
-  let allRecords: any[] = []
-  const seenTaskIds = new Set<number>()
-
-  await Promise.all(
-    uuids.map(async (uuid) => {
-      try {
-        const result = await SharedClient().call("common:getRecords", {
-          type: "ping",
-          uuid,
-          hours: 720,
-          maxCount: 3000,
-        })
-        const tasks: any[] = result?.tasks || []
-        const records: any[] = result?.records || []
-        for (const t of tasks) {
-          if (!seenTaskIds.has(t.id)) {
-            seenTaskIds.add(t.id)
-            allTasks.push(t)
-          }
-        }
-        allRecords = allRecords.concat(records)
-      } catch {
-        // 单个节点失败不影响整体
-      }
-    }),
-  )
+  const allTasks: any[] = result?.tasks || []
+  const allRecords: any[] = result?.records || []
 
   const services: Record<string, ServiceData> = {}
   const now = Date.now()
   const DAY_MS = 24 * 60 * 60 * 1000
 
   for (const task of allTasks) {
-    const taskRecords = allRecords.filter((r: any) => r.task_id === task.id)
+    const taskId = task.id
 
     const up = new Array(30).fill(0)
     const down = new Array(30).fill(0)
     const delaySum = new Array(30).fill(0)
     const delayCnt = new Array(30).fill(0)
 
-    for (const rec of taskRecords) {
+    for (const rec of allRecords) {
+      if (rec.task_id !== taskId) continue
       const ts = Date.parse(rec.time)
       if (!Number.isFinite(ts)) continue
       const dayIndex = 29 - Math.floor((now - ts) / DAY_MS)
