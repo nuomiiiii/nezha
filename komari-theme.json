@@ -135,6 +135,13 @@
                 "help": "开启后隐藏服务器卡片上默认显示的IPv4和IPv6标签。"
             },
             {
+                "key": "HideTrafficVolTag",
+                "name": "隐藏流量标签",
+                "type": "switch",
+                "default": false,
+                "help": "开启后隐藏服务器卡片上显示的流量标签。"
+            },
+            {
                 "name": "流量进度条设置",
                 "type": "title"
             },
