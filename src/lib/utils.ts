@@ -377,10 +377,12 @@ function parseBillingCurrencyOverrides(value: unknown): Record<string, unknown> 
   }
 }
 
-function resolveThemeBillingCurrency(server: any, existingCurrency?: string): string {
+export function resolveThemeBillingCurrency(server: any, existingCurrency?: string): string {
   const win = typeof window === "undefined" ? {} : (window as unknown as Record<string, unknown>) || {}
   const overrides = parseBillingCurrencyOverrides(win.ServerBillingCurrencyOverrides)
-  const overrideKeys = [server?.uuid, server?.name, server?.uuid ? String(uuidToNumber(String(server.uuid))) : ""].filter(Boolean).map(String)
+  const overrideKeys = [server?.uuid, server?.name, server?.id, server?.uuid ? String(uuidToNumber(String(server.uuid))) : ""]
+    .filter(Boolean)
+    .map(String)
 
   for (const key of overrideKeys) {
     if (Object.prototype.hasOwnProperty.call(overrides, key)) {
@@ -759,6 +761,7 @@ export const komariToNezhaWebsocketResponse = (data: any): NezhaWebsocketRespons
         }
 
     return {
+      uuid,
       id: uuidToNumber(uuid),
       name: server.name,
       public_note: buildPublicNoteFromNode(server, server.public_remark || ""),
@@ -809,6 +812,7 @@ export const komariToNezhaWebsocketResponse = (data: any): NezhaWebsocketRespons
     }
 
     servers.push({
+      uuid,
       id: uuidToNumber(uuid),
       name: status.name || uuid,
       public_note: "",

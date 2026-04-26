@@ -4,6 +4,7 @@ export interface NezhaWebsocketResponse {
 }
 
 export interface NezhaServer {
+  uuid?: string
   id: number
   name: string
   public_note: string

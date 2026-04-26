@@ -10,6 +10,7 @@ import {
   normalizeBillingCurrency,
   parseBillingAmountNumber,
   parsePublicNote,
+  resolveThemeBillingCurrency,
 } from "@/lib/utils"
 import { NezhaServer } from "@/types/nezha-api"
 
@@ -186,7 +187,7 @@ function getRemainingSourceValue(billing: BillingData, amount: number, atDate = 
   }
 }
 
-function getSourcePriceText(billing?: BillingData): string {
+function getSourcePriceText(billing?: BillingData, currency?: string): string {
   if (!billing?.amount) {
     return "未设置"
   }
@@ -197,7 +198,7 @@ function getSourcePriceText(billing?: BillingData): string {
     return "按量"
   }
 
-  const amount = formatBillingAmount(billing.amount, billing.currency)
+  const amount = formatBillingAmount(billing.amount, currency || billing.currency)
   return billing.cycle ? `${amount}/${billing.cycle}` : amount
 }
 
@@ -218,7 +219,7 @@ function buildAssetItem(now: number, server: NezhaServer, rates: ExchangeRates):
   const parsed = parsePublicNote(formatted.public_note)
   const billing = parsed?.billingDataMod
   const sourceAmount = billing ? parseBillingAmountNumber(billing.amount) : null
-  const sourceCurrency = normalizeAssetCurrency(billing?.currency)
+  const sourceCurrency = normalizeAssetCurrency(resolveThemeBillingCurrency(server, billing?.currency) || billing?.currency)
   const priceCny = sourceAmount !== null && sourceAmount > 0 ? amountToCny(sourceAmount, sourceCurrency, rates) : sourceAmount === 0 ? 0 : null
   const cycleDays = billing ? parseCycleDays(billing.cycle, billing.startDate, billing.endDate) : null
   const monthlyCny = priceCny !== null && cycleDays ? priceCny / (cycleDays / 30) : null
@@ -243,7 +244,7 @@ function buildAssetItem(now: number, server: NezhaServer, rates: ExchangeRates):
     isUsageBased: billing?.amount === "-1",
     isLongTerm: remaining?.isLongTerm || false,
     isFreeTagged: extra.includes("白嫖"),
-    sourcePriceText: getSourcePriceText(billing),
+    sourcePriceText: getSourcePriceText(billing, sourceCurrency),
   }
 }
 
