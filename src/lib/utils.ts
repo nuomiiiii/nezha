@@ -283,8 +283,17 @@ export interface PublicNoteData {
   planDataMod?: PlanData
 }
 
-const CURRENCY_LABELS: Record<string, string> = {
-  CNY: "CNY ",
+// CNY \u663e\u793a\u98ce\u683c:\u00a5 \u89c6\u89c9\u7b80\u6d01,\u4f46\u4e0e JPY \u5171\u7528\u7b26\u53f7\u6709\u6b67\u4e49\u3002\u5f53\u90e8\u7f72\u91cc"\u7edd\u5927\u591a\u6570 CNY + \u5c11\u6570 JPY"
+// \u65f6,\u7528 \u00a5 \u8868\u793a CNY\u3001\u7528 JPY \u6587\u5b57\u6807\u8bb0\u65e5\u5143\u6700\u81ea\u7136(\u6d88\u6b67\u4e49\u8d1f\u62c5\u843d\u5728\u5c11\u6570\u6d3e);\u53cd\u4e4b\u4ea6\u7136\u3002
+// \u9ed8\u8ba4 \u00a5,\u53ef\u5728 komari-theme.json \u7684 CnySymbolStyle \u91cc\u5207\u5230 CNY\u3002
+function getCnyLabel(): string {
+  if (typeof window === "undefined") return "\u00a5"
+  const style = (window as unknown as Record<string, unknown>).CnySymbolStyle
+  const raw = typeof style === "string" ? style.trim().toUpperCase() : ""
+  return raw === "CNY" ? "CNY " : "\u00a5"
+}
+
+const STATIC_CURRENCY_LABELS: Record<string, string> = {
   JPY: "JPY ",
   USD: "$",
   EUR: "\u20ac",
@@ -300,6 +309,11 @@ const CURRENCY_LABELS: Record<string, string> = {
   "\u00a3": "\u00a3",
   "\u00a5": "\u00a5",
   "\uffe5": "\uffe5",
+}
+
+function getCurrencyLabel(currency: string): string | undefined {
+  if (currency === "CNY") return getCnyLabel()
+  return STATIC_CURRENCY_LABELS[currency]
 }
 
 export function normalizeBillingCurrency(currency?: unknown): string {
@@ -361,7 +375,7 @@ export function formatBillingAmount(amount: string, currency?: string): string {
     return rawAmount
   }
 
-  const label = CURRENCY_LABELS[normalizedCurrency] || `${normalizedCurrency} `
+  const label = getCurrencyLabel(normalizedCurrency) || `${normalizedCurrency} `
   const value = stripCurrencyMarks(rawAmount)
   return value ? `${label}${value}` : rawAmount
 }
@@ -390,6 +404,9 @@ function parseBillingCurrencyOverrides(value: unknown): Record<string, unknown> 
 
 export function resolveThemeBillingCurrency(server: any, existingCurrency?: string): string {
   const win = typeof window === "undefined" ? {} : (window as unknown as Record<string, unknown>) || {}
+
+  // 优先级:主题面板 JSON 覆盖 > tags 内嵌 <CURRENCY> > 主题默认货币 > Komari 后端 currency 字段
+  // 1) 主题面板 ServerBillingCurrencyOverrides JSON
   const overrides = parseBillingCurrencyOverrides(win.ServerBillingCurrencyOverrides)
   const overrideKeys = [server?.uuid, server?.name, server?.id, server?.uuid ? String(uuidToNumber(String(server.uuid))) : ""]
     .filter(Boolean)
@@ -399,17 +416,29 @@ export function resolveThemeBillingCurrency(server: any, existingCurrency?: stri
     if (Object.prototype.hasOwnProperty.call(overrides, key)) {
       const override = overrides[key]
       return isFollowBackendCurrency(override)
-        ? normalizeBillingCurrency(server?.currency) || normalizeBillingCurrency(existingCurrency)
+        ? readTagCurrency(server) || normalizeBillingCurrency(server?.currency) || normalizeBillingCurrency(existingCurrency)
         : normalizeBillingCurrency(override)
     }
   }
 
+  // 2) tags 内嵌 <CURRENCY> 元标签——比 JSON 配置易维护,贴近数据
+  const tagCurrency = readTagCurrency(server)
+  if (tagCurrency) return tagCurrency
+
+  // 3) 主题默认货币
   const defaultCurrency = win.DefaultBillingCurrency
   if (!isFollowBackendCurrency(defaultCurrency)) {
     return normalizeBillingCurrency(defaultCurrency)
   }
 
+  // 4) Komari 后端 currency 字段
   return normalizeBillingCurrency(server?.currency) || normalizeBillingCurrency(existingCurrency)
+}
+
+function readTagCurrency(server: any): string {
+  const tags = typeof server?.tags === "string" ? server.tags : ""
+  if (!tags) return ""
+  return normalizeBillingCurrency(parseTagMetadata(tags).currency)
 }
 
 export function parsePublicNote(publicNote: string): PublicNoteData | null {
@@ -522,49 +551,47 @@ function deriveCycleLabel(billing_cycle?: number): string {
   return `${bc}天`
 }
 
-// 清洗 tags：将分隔符 ";" 拆分为逗号分隔的多个标签，并保留颜色标签为前缀（如 "Red:So-net"）
+// 颜色名与 ISO 货币代码两个集合互不相交,可以共用 <...> 语法。
+const TAG_COLORS = [
+  "Gray", "Gold", "Bronze", "Brown", "Yellow", "Amber", "Orange", "Tomato",
+  "Red", "Ruby", "Crimson", "Pink", "Plum", "Purple", "Violet", "Iris",
+  "Indigo", "Blue", "Cyan", "Teal", "Jade", "Green", "Grass", "Lime", "Mint", "Sky",
+]
+const TAG_CURRENCIES = ["CNY", "JPY", "USD", "EUR", "GBP", "HKD", "TWD", "KRW", "SGD", "CAD", "AUD"]
+
+const TAG_COLOR_EXTRACT = new RegExp(`<\\s*(${TAG_COLORS.join("|")})\\s*>`, "i")
+const TAG_COLOR_REMOVE = new RegExp(`<\\s*(?:${TAG_COLORS.join("|")})\\s*>`, "ig")
+const TAG_CURRENCY_EXTRACT = new RegExp(`<\\s*(${TAG_CURRENCIES.join("|")})\\s*>`, "i")
+const TAG_CURRENCY_REMOVE = new RegExp(`<\\s*(?:${TAG_CURRENCIES.join("|")})\\s*>`, "ig")
+
+// 解析 tags 字段:抽出货币元数据(如 <JPY>),同时返回清洗后的人类可读文本(去掉所有 <...> 元标签)。
+// currency tag 设计为纯元数据,不在 UI 上显示——金额前缀已经会显示 "JPY 12800",再标记一次就重复。
+export function parseTagMetadata(tags: string): { text: string; currency: string } {
+  if (!tags) return { text: "", currency: "" }
+  let currency = ""
+  const cleanedParts: string[] = []
+  for (const rawPart of tags.split(";")) {
+    const part = rawPart.trim()
+    if (!part) continue
+
+    // 第一次遇到的 currency tag 生效(后续覆盖不生效,避免 <JPY><USD> 这种歧义写法)
+    if (!currency) {
+      const m = part.match(TAG_CURRENCY_EXTRACT)
+      if (m) currency = m[1].toUpperCase()
+    }
+
+    const colorMatch = part.match(TAG_COLOR_EXTRACT)
+    const color = colorMatch ? colorMatch[1] : ""
+    const text = part.replace(TAG_COLOR_REMOVE, "").replace(TAG_CURRENCY_REMOVE, "").trim()
+    if (!text) continue
+    cleanedParts.push(color ? `${color}:${text}` : text)
+  }
+  return { text: cleanedParts.join(","), currency }
+}
+
+// 清洗 tags 用于显示;currency tag 在此被静默剥离。
 function sanitizeTags(tags: string): string {
-  const COLORS = [
-    "Gray",
-    "Gold",
-    "Bronze",
-    "Brown",
-    "Yellow",
-    "Amber",
-    "Orange",
-    "Tomato",
-    "Red",
-    "Ruby",
-    "Crimson",
-    "Pink",
-    "Plum",
-    "Purple",
-    "Violet",
-    "Iris",
-    "Indigo",
-    "Blue",
-    "Cyan",
-    "Teal",
-    "Jade",
-    "Green",
-    "Grass",
-    "Lime",
-    "Mint",
-    "Sky",
-  ]
-  const colorExtract = new RegExp(`<\\s*(${COLORS.join("|")})\\s*>`, "i")
-  const colorRemove = new RegExp(`<\\s*(?:${COLORS.join("|")})\\s*>`, "ig")
-  return tags
-    .split(";")
-    .map((part) => {
-      const match = part.match(colorExtract)
-      const color = match ? match[1] : ""
-      const text = part.replace(colorRemove, "").trim()
-      if (!text) return ""
-      return color ? `${color}:${text}` : text
-    })
-    .filter(Boolean)
-    .join(",")
+  return parseTagMetadata(tags).text
 }
 
 function buildPublicNoteFromNode(server: any, existingPublicNote?: string): string {

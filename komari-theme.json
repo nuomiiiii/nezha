@@ -2,7 +2,7 @@
     "name": "nezha-BITJEBE",
     "short": "nezha-BITJEBE",
     "description": "nezha-BITJEBE Theme for Komari Monitor",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "author": "BITJEBE",
     "url": "https://github.com/BITJEBE/nezha-BITJEBE",
     "preview": "preview.png",
@@ -192,11 +192,19 @@
                 "help": "没有单独覆盖时使用的货币。选择跟随后端时使用 Komari 节点的 currency 字段；后端填裸 ¥/￥ 时按 CNY 识别，日元建议填 JPY、JP¥ 或单独覆盖。"
             },
             {
+                "key": "CnySymbolStyle",
+                "name": "人民币显示风格",
+                "type": "select",
+                "options": "¥,CNY",
+                "default": "¥",
+                "help": "人民币金额前缀。¥ 视觉简洁，适合部署里大部分是人民币、少数是日元的场景（日元会自动加 JPY 文字消歧义）。日元为主的部署可切到 CNY 文字。"
+            },
+            {
                 "key": "ServerBillingCurrencyOverrides",
                 "name": "服务器货币覆盖",
                 "type": "input",
                 "default": "",
-                "help": "JSON对象，按服务器UUID、卡片ID或名称指定货币，例如 {\"Tokyo\":\"JPY\",\"spartanhost\":\"USD\",\"1f2e...\":\"CNY\"}。值可填 CNY、JPY、USD 等；填 跟随后端 可让该服务器忽略默认货币。"
+                "help": "JSON对象，按服务器UUID、卡片ID或名称指定货币，例如 {\"Tokyo\":\"JPY\",\"spartanhost\":\"USD\"}。【更推荐】直接在 Komari 后端服务器的 tags 字段里加 <JPY>/<USD>/<CNY> 等元标签，例如把 KDDI 的 tags 改成 \"Tokyonline; KDDI; <JPY>\"，主题会自动识别且不在前端显示该标签。优先级：本JSON > tags元标签 > 默认账单货币 > 后端currency字段。"
             },
             {
                 "name": "流量进度条设置",
