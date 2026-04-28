@@ -110,6 +110,20 @@ function cnyToCurrency(amount: number | null, currency: string, rates: ExchangeR
   return rate ? amount * rate : null
 }
 
+// 解析中文数字 1-99（覆盖 deriveCycleLabel 可能产出的"二年"/"五年" 等以及历史用户手填）
+function parseChineseNumeral(word: string): number | null {
+  if (!word) return null
+  const map: Record<string, number> = { 零: 0, 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 十: 10 }
+  if (Object.prototype.hasOwnProperty.call(map, word)) return map[word]
+  // 处理 "十X"/"X十"/"X十Y" 这种合成
+  const idx = word.indexOf("十")
+  if (idx === -1) return null
+  const tens = idx === 0 ? 1 : map[word[idx - 1]]
+  const ones = idx === word.length - 1 ? 0 : map[word[idx + 1]]
+  if (tens == null || ones == null) return null
+  return tens * 10 + ones
+}
+
 function parseCycleDays(cycle?: string, startDate?: string, endDate?: string): number | null {
   const raw = String(cycle || "").trim().toLowerCase()
   const number = "([0-9]+(?:\\.[0-9]+)?)"
@@ -122,6 +136,23 @@ function parseCycleDays(cycle?: string, startDate?: string, endDate?: string): n
 
   const yearMatch = raw.match(new RegExp(`^${number}\\s*(y|yr|year|years|年)$`))
   if (yearMatch) return Number(yearMatch[1]) * 365
+
+  // 中文数字 + 年/月/天（"五年" / "三个月" / "十天"）
+  const cnYearMatch = raw.match(/^([零一二两三四五六七八九十]+)\s*年$/)
+  if (cnYearMatch) {
+    const n = parseChineseNumeral(cnYearMatch[1])
+    if (n != null && n > 0) return n * 365
+  }
+  const cnMonthMatch = raw.match(/^([零一二两三四五六七八九十]+)\s*个?\s*月$/)
+  if (cnMonthMatch) {
+    const n = parseChineseNumeral(cnMonthMatch[1])
+    if (n != null && n > 0) return n * 30
+  }
+  const cnDayMatch = raw.match(/^([零一二两三四五六七八九十]+)\s*天$/)
+  if (cnDayMatch) {
+    const n = parseChineseNumeral(cnDayMatch[1])
+    if (n != null && n > 0) return n
+  }
 
   if (raw.includes("半") || raw.includes("half") || raw.includes("semi")) return 184
   if (raw.includes("季") || raw.includes("quarter") || raw === "q" || raw === "qr") return 92
@@ -191,8 +222,9 @@ function getSourcePriceText(billing?: BillingData, currency?: string): string {
   if (billing.amount === "0") {
     return "免费"
   }
+  // Komari 后端 price < 0（含 -1）的官方语义是"免费/一次性"，对齐其自带卡片显示。
   if (billing.amount === "-1") {
-    return "按量"
+    return "免费/一次性"
   }
 
   const amount = formatBillingAmount(billing.amount, currency || billing.currency)
@@ -237,8 +269,9 @@ function buildAssetItem(now: number, server: NezhaServer, rates: ExchangeRates):
     remainingCny,
     remainingDays: remaining?.days ?? null,
     isExpired: remaining?.isExpired || false,
-    isFree: billing?.amount === "0" || sourceAmount === 0,
-    isUsageBased: billing?.amount === "-1",
+    // Komari 中 price=0 与 price<0 都是"不计入资产"的语义（前者免费、后者免费/一次性），统一归为 isFree。
+    isFree: billing?.amount === "0" || billing?.amount === "-1" || sourceAmount === 0,
+    isUsageBased: false,
     isLongTerm: remaining?.isLongTerm || false,
     isFreeTagged: extra.includes("白嫖"),
     sourcePriceText: getSourcePriceText(billing, sourceCurrency),

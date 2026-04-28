@@ -1,5 +1,19 @@
 # 更新日志
 
+## v1.1.3
+
+### 修复
+
+- 修复资产卡片中**多年期套餐**的剩余价值被错误地按 1 年计算的问题。Komari 后端 `billing_cycle` 为 1825（5 年）时，主题的 `deriveCycleLabel` 会输出中文 "五年"，但下游的 `parseCycleDays` 只识别阿拉伯数字+年（如 "5y"、"5年"），中文数字会进入兜底逻辑被识别成 365 天。这会导致 `daysLeft / cycleDays` 大幅 > 1 被 `Math.min(1, ...)` 截断成 1，所有 5 年期机器的剩余价值都被显示为原价，相同套餐的多台服务器看上去剩余价值"完全相同"，无法体现到期日差异。本版双管齐下：
+  1. `parseCycleDays` 增加中文数字（一/二/两/三/.../十、十X、X十、X十Y）+ 年/月/天的识别。
+  2. `deriveCycleLabel` 的 `CYCLE_MAP` 改为输出阿拉伯数字（"2年" / "3年" / "5年"），消除歧义来源。
+- 修复 Komari 后端 `price = -1` 的服务器在资产卡片里被误显示为「按量」的问题。Komari 后端 `formatPrice` 函数（`api/public/mjpeg.go:1368-1374`）的官方语义是 `price < 0` = **"免费/一次性"**、`price == 0` = **"免费"**，Komari 中并不存在"按量计费"概念。本版把 `-1` 改为显示「免费/一次性」并归入 `isFree` 分类，与 Komari 自带卡片显示对齐，过滤免费资产、未换算计数等逻辑也会正确处理这类机器。
+
+### 内部
+
+- 抽出 `parseChineseNumeral` 工具函数解析 1-99 的中文数字。
+- `AssetSummaryWidget` 的 `isUsageBased` 字段在 Komari 语义下永远为 false，保留字段是为了避免破坏类型契约；过滤/计数逻辑通过 `isFree` 兜底。
+
 ## v1.1.2
 
 ### 修复

@@ -537,7 +537,8 @@ const countryFlagToCode = (flag: string): string => {
 
 // 根据 common:getNodes 的字段构造/合并公开备注（public_note）
 // 目标结构：{ billingDataMod: { startDate,endDate,autoRenewal,cycle,amount }, planDataMod: { bandwidth,trafficVol,trafficType,IPv4,IPv6,networkRoute,extra } }
-const CYCLE_MAP: Record<number, string> = { 30: "月", 92: "季", 184: "半年", 365: "年", 730: "二年", 1095: "三年", 1825: "五年" }
+// 周期标签：使用阿拉伯数字+年/月，避免"五年"等中文数字给下游 parseCycleDays 带来识别歧义。
+const CYCLE_MAP: Record<number, string> = { 30: "月", 92: "季", 184: "半年", 365: "年", 730: "2年", 1095: "3年", 1825: "5年" }
 
 function deriveCycleLabel(billing_cycle?: number): string {
   const bc = Number(billing_cycle || 0)
