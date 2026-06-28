@@ -1,45 +1,8 @@
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { FormEvent, useState } from "react"
 
 export default function PrivateAccessGate({ siteName, siteDesc }: { siteName: string; siteDesc?: string }) {
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
-
   const customLogo = ((window as unknown as Record<string, unknown>).CustomLogo as string) || "/favicon.ico"
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const token = password.trim()
-    if (!token) {
-      setError("请输入访问密码")
-      return
-    }
-
-    setLoading(true)
-    setError("")
-    document.cookie = `temp_key=${token}; path=/; max-age=2592000; SameSite=Lax`
-
-    try {
-      const res = await fetch("/api/public", { credentials: "include", cache: "no-store" })
-      const json = await res.json()
-      const data = json?.data || json
-      if (res.ok && data?.private_site === false) {
-        window.location.reload()
-        return
-      }
-
-      document.cookie = "temp_key=; path=/; max-age=0; SameSite=Lax"
-      setError("访问密码无效或已过期")
-    } catch {
-      document.cookie = "temp_key=; path=/; max-age=0; SameSite=Lax"
-      setError("验证失败，请稍后重试")
-    } finally {
-      setLoading(false)
-    }
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
@@ -51,25 +14,18 @@ export default function PrivateAccessGate({ siteName, siteDesc }: { siteName: st
             <p className="truncate text-xs text-muted-foreground">{siteDesc || "Private monitor"}</p>
           </div>
         </section>
-        <form className="space-y-3" onSubmit={handleSubmit}>
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">访问密码</label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="输入临时访问密码"
-              autoFocus
-            />
-          </div>
-          {error && <p className="text-xs text-red-500">{error}</p>}
-          <Button type="submit" className="w-full rounded-full" disabled={loading}>
-            {loading ? "验证中..." : "进入监控"}
+        <section className="space-y-2">
+          <p className="text-sm font-medium">该监控站点已开启私密模式</p>
+          <p className="text-xs leading-5 text-muted-foreground">访问机器信息前必须先登录 Komari 管理员账号。</p>
+        </section>
+        <div className="space-y-2">
+          <Button asChild className="w-full rounded-full">
+            <a href="/admin">管理员登录</a>
           </Button>
-        </form>
-        <a href="/admin" className="block text-center text-xs text-muted-foreground transition-colors hover:text-foreground">
-          管理员登录
-        </a>
+          <Button variant="outline" className="w-full rounded-full" onClick={() => window.location.reload()}>
+            我已登录，刷新页面
+          </Button>
+        </div>
       </Card>
     </div>
   )
