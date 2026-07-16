@@ -19,7 +19,7 @@
 
 ### 服务监控
 - 30 天服务可用性监控，按日统计在线/离线/延迟
-- 数据来源于 Komari 的 `common:getRecords` ping 任务
+- Komari 1.2.6+ 使用支持 raw/rollup 的 `public:queryMetrics`；旧版后端自动回退到 `common:getRecords`
 - 平均延迟计算自动排除无数据的天数
 
 ### 其他改进
@@ -49,7 +49,13 @@ npm run build
 在 Komari 后端按服务器设置：
 - `traffic_limit`：流量上限（字节）
 - `traffic_limit_type`：`sum` | `max` | `min` | `up` | `down`
-- `expired_at`：到期日期（用于计算流量重置倒计时）
+
+Agent 的 `--month-rotate n` 控制累计流量在每月第 `n` 天归零。主题里的重置倒计时需通过以下任一方式设置：
+
+- 推荐：在节点 `tags` 中添加 `<TRD:n>`，例如 `<TRD:1>`。
+- 或在主题设置的「流量重置日覆盖」中按 UUID、卡片 ID 或名称配置。
+
+`expired_at` 是套餐到期日期，用于资产剩余价值计算，不是流量重置日。
 
 ### 标签
 在 Komari 后端的标签字段中按服务器设置：
@@ -82,4 +88,4 @@ So-net<red>;1Gbps<green>;CN2 GIA<blue>
 
 ## 许可证
 
-MIT
+Apache License 2.0

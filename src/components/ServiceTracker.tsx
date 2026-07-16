@@ -81,8 +81,8 @@ export function ServiceTracker({ serverList }: { serverList: NezhaServer[] }) {
     const uptime = totalChecks > 0 ? (totalUp / totalChecks) * 100 : 0
 
     const activeDelays = serviceData.delay.slice(firstDataIndex)
-    const nonZeroDelays = activeDelays.filter((d) => d > 0)
-    const avgDelay = nonZeroDelays.length > 0 ? nonZeroDelays.reduce((a, b) => a + b, 0) / nonZeroDelays.length : 0
+    const delayWeight = activeDelays.reduce((sum, _, index) => sum + activeUp[index], 0)
+    const avgDelay = delayWeight > 0 ? activeDelays.reduce((sum, delay, index) => sum + delay * activeUp[index], 0) / delayWeight : 0
 
     const totalDays = days.length
 
