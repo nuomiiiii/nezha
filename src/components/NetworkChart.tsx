@@ -80,6 +80,7 @@ const calculatePacketLoss = (delays: number[]): number[] => {
 
 const TIME_OPTIONS = [
   { value: "1", label: "1h" },
+  { value: "4", label: "4h" },
   { value: "6", label: "6h" },
   { value: "12", label: "12h" },
   { value: "24", label: "24h" },
@@ -98,7 +99,7 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
     enabled: show,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    refetchInterval: 10000,
+    refetchInterval: hours <= 24 ? 10000 : hours <= 168 ? 60000 : 300000,
   })
 
   if (!monitorData) return <NetworkChartLoading />
@@ -202,7 +203,11 @@ export const NetworkChartClient = React.memo(function NetworkChart({
 
         // Calculate average packet loss if available
         const packetLossData = monitorData.filter((item) => item.packet_loss !== undefined).map((item) => item.packet_loss!)
-        const avgPacketLoss = packetLossData.length > 0 ? packetLossData.reduce((sum, loss) => sum + loss, 0) / packetLossData.length : null
+        const packetLossWeight = monitorData.reduce((sum, item) => sum + (item.packet_loss !== undefined ? item.sample_count || 1 : 0), 0)
+        const avgPacketLoss =
+          packetLossData.length > 0 && packetLossWeight > 0
+            ? monitorData.reduce((sum, item) => sum + (item.packet_loss || 0) * (item.sample_count || 1), 0) / packetLossWeight
+            : null
 
         return (
           <button
@@ -552,6 +557,7 @@ const transformData = (data: NezhaMonitor[]) => {
         created_at: item.created_at[i],
         avg_delay: item.avg_delay[i],
         packet_loss: packetLoss[i],
+        sample_count: item.sample_count?.[i],
       })
     }
   })

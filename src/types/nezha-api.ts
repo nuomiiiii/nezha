@@ -99,6 +99,7 @@ export type ServerMonitorChart = {
     created_at: number
     avg_delay: number
     packet_loss?: number
+    sample_count?: number
   }[]
 }
 
@@ -110,6 +111,7 @@ export interface NezhaMonitor {
   created_at: number[]
   avg_delay: number[]
   packet_loss?: number[]
+  sample_count?: number[]
 }
 
 export interface ServiceResponse {
