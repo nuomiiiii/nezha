@@ -80,7 +80,6 @@ const calculatePacketLoss = (delays: number[]): number[] => {
 
 const TIME_OPTIONS = [
   { value: "1", label: "1h" },
-  { value: "4", label: "4h" },
   { value: "6", label: "6h" },
   { value: "12", label: "12h" },
   { value: "24", label: "24h" },
