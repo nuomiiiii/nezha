@@ -1,6 +1,9 @@
 name: Release Theme Package
 
 on:
+  push:
+    tags:
+      - "v*"
   release:
     types: [published]
 
@@ -29,7 +32,7 @@ jobs:
 
       - name: Update theme configuration
         env:
-          RELEASE_VERSION: ${{ github.event.release.tag_name }}
+          RELEASE_VERSION: ${{ github.event.release.tag_name || github.ref_name }}
         run: |
           # Get current date in YY.MM.DD format
           VERSION_DATE=$(date +"%y.%m.%d")
@@ -87,5 +90,6 @@ jobs:
         with:
           files: ${{ steps.package.outputs.zip_name }}
           fail_on_unmatched_files: true
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
