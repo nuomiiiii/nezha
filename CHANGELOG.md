@@ -1,5 +1,17 @@
 # 更新日志
 
+## v2.0.0
+
+### 修复
+
+- 访客胶囊不再请求缺少 CORS 许可的 `ipapi.co` 与 `freeipapi.com`，改用支持浏览器跨域访问的接口并按顺序回退，避免控制台重复报错。
+- 流量重置日优先同步服务器返回字段，并兼容 `traffic_reset_day`、`month_rotate` 与 `month_rotate_day`；旧版后端仍可使用 `<TRD:n>` 标签或主题覆盖。
+
+### 调整
+
+- 项目与 Komari 主题标识统一改为 `nezha`，版本升级至 2.0.0。
+- 仓库、页脚和 Release 链接切换至 `nuomiiiii/nezha`，Release 产物命名为 `nezha-v2.0.0.zip`。
+
 ## v1.1.7
 
 ### 调整

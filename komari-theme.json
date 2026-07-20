@@ -1,10 +1,10 @@
 {
-    "name": "nezha-BITJEBE",
-    "short": "nezha-BITJEBE",
-    "description": "nezha-BITJEBE Theme for Komari Monitor",
-    "version": "1.1.7",
-    "author": "BITJEBE",
-    "url": "https://github.com/BITJEBE/nezha-BITJEBE",
+    "name": "nezha",
+    "short": "nezha",
+    "description": "nezha Theme for Komari Monitor",
+    "version": "2.0.0",
+    "author": "nuomiiiii",
+    "url": "https://github.com/nuomiiiii/nezha",
     "preview": "preview.png",
     "configuration": {
         "type": "managed",
@@ -243,7 +243,7 @@
                 "name": "流量重置日覆盖",
                 "type": "input",
                 "default": "",
-                "help": "JSON对象，按服务器UUID、卡片ID或名称指定每月流量重置日，例如 {\"Tokyo\":1,\"server-uuid\":15}。更推荐直接在 Komari 节点 tags 里加 <TRD:1> 这类元标签；tags 优先级最高，本配置作为兜底。都没有时显示 N/A。"
+                "help": "服务器返回重置日时会自动同步。旧版 Komari 可在节点 tags 里加 <TRD:1>，或用 JSON 按服务器UUID、卡片ID或名称覆盖，例如 {\"Tokyo\":1,\"server-uuid\":15}。优先级：服务器字段 > tags > 本配置；都没有时显示 N/A。"
             }
         ]
     }

@@ -29,8 +29,8 @@ const Footer: React.FC = () => {
             </p>
             <section>
               {t("footer.themeBy")}
-              <a href={"https://github.com/BITJEBE/nezha-BITJEBE"} target="_blank">
-                nezha-BITJEBE
+              <a href={"https://github.com/nuomiiiii/nezha"} target="_blank">
+                nezha
               </a>
             </section>
           </div>
