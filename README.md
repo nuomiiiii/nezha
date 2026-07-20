@@ -1,4 +1,4 @@
-# nezha-BITJEBE
+# nezha
 
 基于 [nezha-dash-v1](https://github.com/Akizon77/nezha-dash-v1) 二次开发的 [Komari Monitor](https://github.com/komari-monitor/komari) 自定义主题。
 
@@ -30,14 +30,14 @@
 ## 安装方法
 
 ### 方法一：通过 Komari 管理面板上传
-1. 从 [Releases](https://github.com/BITJEBE/nezha-BITJEBE/releases) 下载最新的 zip 文件
+1. 从 [Releases](https://github.com/nuomiiiii/nezha/releases) 下载最新的 zip 文件
 2. 进入 Komari 管理面板 -> 主题管理
 3. 点击上传并选择 zip 文件
 
 ### 方法二：从源码构建
 ```bash
-git clone https://github.com/BITJEBE/nezha-BITJEBE.git
-cd nezha-BITJEBE
+git clone https://github.com/nuomiiiii/nezha.git
+cd nezha
 npm install
 npm run build
 ```
@@ -50,9 +50,9 @@ npm run build
 - `traffic_limit`：流量上限（字节）
 - `traffic_limit_type`：`sum` | `max` | `min` | `up` | `down`
 
-Agent 的 `--month-rotate n` 控制累计流量在每月第 `n` 天归零。主题里的重置倒计时需通过以下任一方式设置：
+Agent 的 `--month-rotate n` 控制累计流量在每月第 `n` 天归零。主题会优先同步服务器接口返回的重置日，并兼容以下旧版配置：
 
-- 推荐：在节点 `tags` 中添加 `<TRD:n>`，例如 `<TRD:1>`。
+- 在节点 `tags` 中添加 `<TRD:n>`，例如 `<TRD:1>`。
 - 或在主题设置的「流量重置日覆盖」中按 UUID、卡片 ID 或名称配置。
 
 `expired_at` 是套餐到期日期，用于资产剩余价值计算，不是流量重置日。
@@ -83,7 +83,8 @@ So-net<red>;1Gbps<green>;CN2 GIA<blue>
 
 ## 贡献者
 
-- [BITJEBE](https://github.com/BITJEBE) - 项目所有者
+- [nuomiiiii](https://github.com/nuomiiiii) - 项目维护者
+- [BITJEBE](https://github.com/BITJEBE) - 上游项目作者
 - [Claude](https://claude.ai) - AI 辅助开发
 
 ## 许可证

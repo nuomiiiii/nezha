@@ -11,7 +11,8 @@ type VisitorInfo = {
   org: string
 }
 
-const VISITOR_APIS = ["https://ipapi.co/json/", "https://api.ip.sb/geoip", "https://freeipapi.com/api/json", "https://ipwho.is/"]
+// These providers explicitly allow browser requests from arbitrary origins.
+const VISITOR_APIS = ["https://ipwho.is/", "https://api.ip.sb/geoip"]
 
 async function fetchWithTimeout(url: string, timeoutMs = 4500): Promise<Response> {
   const controller = new AbortController()
@@ -42,32 +43,22 @@ function normalizeVisitorInfo(data: Record<string, any>): VisitorInfo {
 }
 
 async function fetchVisitorInfo(): Promise<VisitorInfo> {
-  return new Promise((resolve, reject) => {
-    let pending = VISITOR_APIS.length
-    let resolved = false
+  let lastError: unknown = new Error("Visitor API failed")
 
-    VISITOR_APIS.forEach((url) => {
-      ;(async () => {
-        try {
-          const res = await fetchWithTimeout(url)
-          if (!res.ok) {
-            throw new Error("Visitor API failed")
-          }
-          const data = (await res.json()) as Record<string, any>
-          const info = normalizeVisitorInfo(data)
-          if (!resolved) {
-            resolved = true
-            resolve(info)
-          }
-        } catch (error) {
-          pending -= 1
-          if (!resolved && pending === 0) {
-            reject(error)
-          }
-        }
-      })()
-    })
-  })
+  for (const url of VISITOR_APIS) {
+    try {
+      const res = await fetchWithTimeout(url)
+      if (!res.ok) {
+        throw new Error(`Visitor API failed: ${res.status}`)
+      }
+      const data = (await res.json()) as Record<string, any>
+      return normalizeVisitorInfo(data)
+    } catch (error) {
+      lastError = error
+    }
+  }
+
+  throw lastError
 }
 
 export default function VisitorCapsuleBar() {

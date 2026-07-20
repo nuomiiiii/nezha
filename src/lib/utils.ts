@@ -622,6 +622,18 @@ function parseTrafficResetDay(value: unknown): number | undefined {
 }
 
 function resolveTrafficResetDay(server: any): number | undefined {
+  const serverResetDay = [
+    server?.traffic_reset_day,
+    server?.trafficResetDay,
+    server?.month_rotate,
+    server?.monthRotate,
+    server?.month_rotate_day,
+    server?.monthRotateDay,
+  ]
+    .map(parseTrafficResetDay)
+    .find((day) => day !== undefined)
+  if (serverResetDay) return serverResetDay
+
   const tagResetDay = parseTagMetadata(typeof server?.tags === "string" ? server.tags : "").trafficResetDay
   if (tagResetDay) return tagResetDay
 
