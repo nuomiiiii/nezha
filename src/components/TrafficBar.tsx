@@ -8,22 +8,9 @@ interface TrafficBarProps {
   limitType: string
 }
 
-function getMonthlyResetDate(now: Date, day: number): Date {
-  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-  return new Date(now.getFullYear(), now.getMonth(), Math.min(day, lastDay))
-}
-
-function calcResetDays(resetDay?: number): string {
+function formatResetDay(resetDay?: number): string {
   if (!resetDay || resetDay < 1 || resetDay > 31) return "N/A"
-
-  const now = new Date()
-  let reset = getMonthlyResetDate(now, resetDay)
-  if (reset <= now) {
-    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-    reset = getMonthlyResetDate(nextMonth, resetDay)
-  }
-
-  return Math.ceil((reset.getTime() - now.getTime()) / 86400000) + "日"
+  return `每月${resetDay}日`
 }
 
 function getTypeLabel(type: string): string {
@@ -54,12 +41,12 @@ export default function TrafficBar({ used, limit, resetDay, limitType }: Traffic
   const percentStr = percent.toFixed(2)
   const usedFormatted = formatBytes(used)
   const limitFormatted = formatBytes(limit)
-  const resetDays = calcResetDays(resetDay)
+  const resetDayLabel = formatResetDay(resetDay)
 
   // 根据设置构建要显示的信息项
   const infoItems: string[] = []
   if (showPercent) infoItems.push(`${percentStr}%`)
-  if (showResetDay) infoItems.push(`流量重置: ${resetDays}`)
+  if (showResetDay) infoItems.push(`流量重置: ${resetDayLabel}`)
   if (showBillingMode) infoItems.push(`计费: ${getTypeLabel(limitType)}`)
 
   const shouldCycle = infoItems.length > 1
