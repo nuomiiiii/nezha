@@ -73,7 +73,7 @@ jobs:
           cp komari-theme.json theme-package/
           cp -r dist/ theme-package/
 
-          # Create a versioned theme package, e.g., nezha-v2.0.0.zip
+          # Create a versioned theme package, e.g., nezha-v2.1.0.zip
           ZIP_NAME="nezha-${RELEASE_VERSION}.zip"
 
           cd theme-package
@@ -90,6 +90,6 @@ jobs:
         with:
           files: ${{ steps.package.outputs.zip_name }}
           fail_on_unmatched_files: true
-          generate_release_notes: true
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
