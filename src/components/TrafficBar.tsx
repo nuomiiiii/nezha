@@ -11,7 +11,7 @@ interface TrafficBarProps {
 
 function formatResetCountdown(resetDay?: number): string {
   const days = daysUntilTrafficReset(resetDay)
-  return days === undefined ? "N/A" : `${days}日`
+  return days === undefined ? "N/A" : `${days} 日`
 }
 
 function getTypeLabel(type: string): string {
