@@ -9,9 +9,9 @@ interface TrafficBarProps {
   limitType: string
 }
 
-function formatResetCountdown(resetDay?: number): string {
+function formatResetMessage(resetDay?: number): string {
   const days = daysUntilTrafficReset(resetDay)
-  return days === undefined ? "N/A" : `${days} 日`
+  return days === undefined ? "流量重置：N/A" : `${days} 天后，流量重置`
 }
 
 function getTypeLabel(type: string): string {
@@ -42,12 +42,12 @@ export default function TrafficBar({ used, limit, resetDay, limitType }: Traffic
   const percentStr = percent.toFixed(2)
   const usedFormatted = formatBytes(used)
   const limitFormatted = formatBytes(limit)
-  const resetCountdown = formatResetCountdown(resetDay)
+  const resetMessage = formatResetMessage(resetDay)
 
   // 根据设置构建要显示的信息项
   const infoItems: string[] = []
   if (showPercent) infoItems.push(`${percentStr}%`)
-  if (showResetDay) infoItems.push(`距离流量重置：${resetCountdown}`)
+  if (showResetDay) infoItems.push(resetMessage)
   if (showBillingMode) infoItems.push(`计费: ${getTypeLabel(limitType)}`)
 
   const shouldCycle = infoItems.length > 1
