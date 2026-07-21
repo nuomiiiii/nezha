@@ -1,4 +1,5 @@
 import { formatBytes } from "@/lib/format"
+import { daysUntilTrafficReset } from "@/lib/trafficReset"
 import { useEffect, useRef, useState } from "react"
 
 interface TrafficBarProps {
@@ -8,9 +9,9 @@ interface TrafficBarProps {
   limitType: string
 }
 
-function formatResetDay(resetDay?: number): string {
-  if (!resetDay || resetDay < 1 || resetDay > 31) return "N/A"
-  return `每月${resetDay}日`
+function formatResetCountdown(resetDay?: number): string {
+  const days = daysUntilTrafficReset(resetDay)
+  return days === undefined ? "N/A" : `${days}日`
 }
 
 function getTypeLabel(type: string): string {
@@ -41,12 +42,12 @@ export default function TrafficBar({ used, limit, resetDay, limitType }: Traffic
   const percentStr = percent.toFixed(2)
   const usedFormatted = formatBytes(used)
   const limitFormatted = formatBytes(limit)
-  const resetDayLabel = formatResetDay(resetDay)
+  const resetCountdown = formatResetCountdown(resetDay)
 
   // 根据设置构建要显示的信息项
   const infoItems: string[] = []
   if (showPercent) infoItems.push(`${percentStr}%`)
-  if (showResetDay) infoItems.push(`流量重置: ${resetDayLabel}`)
+  if (showResetDay) infoItems.push(`距离流量重置：${resetCountdown}`)
   if (showBillingMode) infoItems.push(`计费: ${getTypeLabel(limitType)}`)
 
   const shouldCycle = infoItems.length > 1

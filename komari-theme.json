@@ -2,7 +2,7 @@
     "name": "nezha",
     "short": "nezha",
     "description": "nezha Theme for Komari Monitor",
-    "version": "2.0.1",
+    "version": "2.1.0",
     "author": "nuomiiiii",
     "url": "https://github.com/nuomiiiii/nezha",
     "preview": "preview.png",
@@ -229,7 +229,7 @@
                 "name": "显示流量重置日",
                 "type": "switch",
                 "default": true,
-                "help": "在流量进度条右上角显示固定的每月流量重置日，例如 <TRD:1> 显示为“每月1日”。"
+                "help": "在流量进度条右上角显示距离下次流量重置的自然日数。新版 Komari 会自动同步节点配置。"
             },
             {
                 "key": "TrafficBarShowBillingMode",
