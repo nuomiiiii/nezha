@@ -90,7 +90,15 @@ jobs:
           echo "Created package: ${ZIP_NAME}"
           ls -la ${ZIP_NAME}
 
+      - name: Preserve theme package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.zip_name }}
+          path: ${{ steps.package.outputs.zip_name }}
+          if-no-files-found: error
+
       - name: Upload Release Asset
+        if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.tag || github.event.release.tag_name }}
