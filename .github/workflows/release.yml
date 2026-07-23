@@ -1,9 +1,6 @@
 name: Release Theme Package
 
 on:
-  push:
-    tags:
-      - "v*"
   release:
     types: [published]
 
