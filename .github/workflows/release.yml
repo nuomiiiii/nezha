@@ -1,6 +1,12 @@
 name: Release Theme Package
 
 on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to rebuild
+        required: true
+        type: string
   release:
     types: [published]
 
@@ -14,6 +20,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.event.release.tag_name }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -29,7 +37,7 @@ jobs:
 
       - name: Update theme configuration
         env:
-          RELEASE_VERSION: ${{ github.event.release.tag_name || github.ref_name }}
+          RELEASE_VERSION: ${{ inputs.tag || github.event.release.tag_name }}
         run: |
           # Get current date in YY.MM.DD format
           VERSION_DATE=$(date +"%y.%m.%d")
