@@ -19,3 +19,8 @@ const STATIC_CURRENCY_LABELS: Record<string, string> = {
 export function getStaticCurrencyLabel(currency: string): string | undefined {
   return STATIC_CURRENCY_LABELS[currency]
 }
+
+export function detectCanadianDollarCurrency(amount: string): "CAD" | undefined {
+  const value = String(amount || "").trim()
+  return /^(?:CAD|CA\$|C\$)\s*/i.test(value) || /\s*(?:CAD|CA\$|C\$)$/i.test(value) ? "CAD" : undefined
+}

@@ -1,5 +1,5 @@
 import { SharedClient } from "@/hooks/use-rpc2"
-import { getStaticCurrencyLabel } from "@/lib/currency-label"
+import { detectCanadianDollarCurrency, getStaticCurrencyLabel } from "@/lib/currency-label"
 import { formatBytes } from "@/lib/format"
 import { NezhaServer, NezhaWebsocketResponse } from "@/types/nezha-api"
 import { type ClassValue, clsx } from "clsx"
@@ -355,7 +355,7 @@ export function formatBillingAmount(amount: string, currency?: string): string {
     return rawAmount
   }
 
-  const normalizedCurrency = normalizeBillingCurrency(currency)
+  const normalizedCurrency = normalizeBillingCurrency(currency) || detectCanadianDollarCurrency(rawAmount)
   if (!normalizedCurrency) {
     return rawAmount
   }
