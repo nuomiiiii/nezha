@@ -61,7 +61,7 @@ export default defineConfig(({ mode }) => {
     }
     baseConfig.server = {
       proxy: {
-        "/api/rpc2": {
+        "/api": {
           target: process.env.VITE_API_TARGET,
           changeOrigin: true,
           ws: true,

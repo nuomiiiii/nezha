@@ -11,6 +11,7 @@ import {
 import { DateTime } from "luxon"
 
 import { getKomariNodes, uuidToNumber } from "./utils"
+import { orderMonitorsByPingTasks } from "./ping-task-order"
 
 //let lastestRefreshTokenAt = 0
 
@@ -190,7 +191,7 @@ function monitorDataFromMetricSeries(
     if (monitor.created_at.length > 0) monitors.push(monitor)
   }
 
-  return monitors.sort((a, b) => a.monitor_id - b.monitor_id || a.monitor_name.localeCompare(b.monitor_name))
+  return orderMonitorsByPingTasks(monitors, tasks)
 }
 
 function serviceDataFromMetricSeries(seriesList: KomariMetricSeries[], tasks: KomariPingTask[], entityIds: string[]): Record<string, ServiceData> {

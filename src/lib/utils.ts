@@ -1,4 +1,5 @@
 import { SharedClient } from "@/hooks/use-rpc2"
+import { getStaticCurrencyLabel } from "@/lib/currency-label"
 import { formatBytes } from "@/lib/format"
 import { NezhaServer, NezhaWebsocketResponse } from "@/types/nezha-api"
 import { type ClassValue, clsx } from "clsx"
@@ -294,27 +295,9 @@ function getCnyLabel(): string {
   return raw === "CNY" ? "CNY " : "\u00a5"
 }
 
-const STATIC_CURRENCY_LABELS: Record<string, string> = {
-  JPY: "JPY ",
-  USD: "$",
-  EUR: "\u20ac",
-  GBP: "\u00a3",
-  HKD: "HK$",
-  TWD: "NT$",
-  KRW: "KRW ",
-  SGD: "S$",
-  CAD: "CA$",
-  AUD: "A$",
-  $: "$",
-  "\u20ac": "\u20ac",
-  "\u00a3": "\u00a3",
-  "\u00a5": "\u00a5",
-  "\uffe5": "\uffe5",
-}
-
 function getCurrencyLabel(currency: string): string | undefined {
   if (currency === "CNY") return getCnyLabel()
-  return STATIC_CURRENCY_LABELS[currency]
+  return getStaticCurrencyLabel(currency)
 }
 
 export function normalizeBillingCurrency(currency?: unknown): string {
@@ -336,6 +319,7 @@ export function normalizeBillingCurrency(currency?: unknown): string {
   if (compact === "US$") return "USD"
   if (compact === "HK$") return "HKD"
   if (compact === "NT$") return "TWD"
+  if (compact === "CA$" || compact === "C$") return "CAD"
 
   return compact || raw
 }
@@ -344,11 +328,11 @@ export function stripCurrencyMarks(amount: string): string {
   return amount
     .trim()
     .replace(
-      /^(?:CNY|RMB|JPY|USD|EUR|GBP|HKD|TWD|KRW|SGD|CAD|AUD|CN\u00a5|CN\uffe5|JP\u00a5|JP\uffe5|US\$|HK\$|NT\$|\$|\u20ac|\u00a3|\u00a5|\uffe5)\s*/i,
+      /^(?:CNY|RMB|JPY|USD|EUR|GBP|HKD|TWD|KRW|SGD|CAD|AUD|CN\u00a5|CN\uffe5|JP\u00a5|JP\uffe5|US\$|HK\$|NT\$|CA\$|C\$|\$|\u20ac|\u00a3|\u00a5|\uffe5)\s*/i,
       "",
     )
     .replace(
-      /\s*(?:CNY|RMB|JPY|USD|EUR|GBP|HKD|TWD|KRW|SGD|CAD|AUD|CN\u00a5|CN\uffe5|JP\u00a5|JP\uffe5|US\$|HK\$|NT\$|\$|\u20ac|\u00a3|\u00a5|\uffe5)$/i,
+      /\s*(?:CNY|RMB|JPY|USD|EUR|GBP|HKD|TWD|KRW|SGD|CAD|AUD|CN\u00a5|CN\uffe5|JP\u00a5|JP\uffe5|US\$|HK\$|NT\$|CA\$|C\$|\$|\u20ac|\u00a3|\u00a5|\uffe5)$/i,
       "",
     )
     .trim()
