@@ -5,7 +5,7 @@ import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTool
 import { fetchMonitor } from "@/lib/nezha-api"
 import { cn, formatTime } from "@/lib/utils"
 import { NezhaMonitor, ServerMonitorChart } from "@/types/nezha-api"
-import { useQuery } from "@tanstack/react-query"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import * as React from "react"
 import { useCallback, useMemo } from "react"
 import { useTranslation } from "react-i18next"
@@ -96,6 +96,7 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
     queryKey: ["monitor", server_id, hours],
     queryFn: () => fetchMonitor(server_id, hours),
     enabled: show,
+    placeholderData: keepPreviousData,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     refetchInterval: hours <= 24 ? 10000 : hours <= 168 ? 60000 : 300000,
