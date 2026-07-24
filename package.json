@@ -1,13 +1,13 @@
 {
   "name": "nezha",
   "private": true,
-  "version": "2.1.6",
+  "version": "2.1.7",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "test": "node --test tests/ping-task-order.test.ts tests/currency-label.test.ts",
+    "test": "node --test tests/ping-task-order.test.ts tests/currency-label.test.ts tests/network-chart-stability.test.ts",
     "lint:fix": "eslint --fix .",
     "format": "prettier --write .",
     "preview": "vite preview"

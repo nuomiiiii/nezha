@@ -3,6 +3,7 @@ import ServerDetailChart from "@/components/ServerDetailChart"
 import ServerDetailOverview from "@/components/ServerDetailOverview"
 import TabSwitch from "@/components/TabSwitch"
 import { Separator } from "@/components/ui/separator"
+import { cn } from "@/lib/utils"
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 
@@ -33,11 +34,21 @@ export default function ServerDetail() {
         </div>
         <Separator className="flex-1" />
       </section>
-      <div style={{ display: currentTab === tabs[0] ? "block" : "none" }}>
-        <ServerDetailChart server_id={server_id} />
-      </div>
-      <div style={{ display: currentTab === tabs[1] ? "block" : "none" }}>
-        <NetworkChart server_id={Number(server_id)} show={currentTab === tabs[1]} />
+      <div className="relative w-full">
+        <div
+          aria-hidden={currentTab !== tabs[0]}
+          data-testid="server-detail-panel"
+          className={cn("w-full", currentTab === tabs[0] ? "relative visible" : "pointer-events-none invisible absolute inset-x-0 top-0")}
+        >
+          <ServerDetailChart server_id={server_id} />
+        </div>
+        <div
+          aria-hidden={currentTab !== tabs[1]}
+          data-testid="server-network-panel"
+          className={cn("w-full", currentTab === tabs[1] ? "relative visible" : "pointer-events-none invisible absolute inset-x-0 top-0")}
+        >
+          <NetworkChart server_id={Number(server_id)} show={currentTab === tabs[1]} />
+        </div>
       </div>
     </div>
   )
