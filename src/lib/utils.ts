@@ -708,22 +708,9 @@ function buildPublicNoteFromNode(server: any, existingPublicNote?: string): stri
   }
 }
 
-export const komariToNezhaWebsocketResponse = (data: any): NezhaWebsocketResponse => {
-  // 每次 WS tick 都尝试拿一次节点列表;getKomariNodes 自带 2 分钟 TTL,
-  // 命中缓存时几乎零开销,TTL 过期后会触发刷新,从而让后端删除的服务器
-  // 在 ≤2 分钟内从前端消失(否则 km_servers_cache 一旦填充就永不更新,
-  // 已删除的机器会以"幽灵卡片"形式残留:名称来自缓存、所有指标为 0、
-  // last_active=0000-00-00,直到刷新页面)
-  getKomariNodes()
-    .then((res) => {
-      const next = Object.values(res || {})
-      if (next.length > 0) {
-        km_servers_cache = next
-      }
-    })
-    .catch(() => {
-      // 拉取失败保持现有缓存,下一轮自动重试
-    })
+export const komariToNezhaWebsocketResponse = (data: any, nodes: Record<string, any>): NezhaWebsocketResponse => {
+  // 直接使用本轮已完成的节点请求，避免异步缓存回调晚于状态转换。
+  km_servers_cache = Object.values(nodes || {})
 
   // 如果还没有缓存，先按 data 渲染，避免首次为空
   if (!km_servers_cache || km_servers_cache.length === 0) {

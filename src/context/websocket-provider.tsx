@@ -16,35 +16,39 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ url, child
   const [needReconnect, setNeedReconnect] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const getData = () => {
-    const rpc2 = SharedClient()
-    return rpc2
-      .call("common:getNodesLatestStatus")
-      .then((res) => {
-        const nzwsres = komariToNezhaWebsocketResponse(res)
-        setLastMessage({ data: JSON.stringify(nzwsres) })
-        setMessageHistory((prev) => {
-          const updated = [{ data: JSON.stringify(nzwsres) }, ...prev]
-          return updated.slice(0, 30)
-        })
-      })
-      .catch((err) => {
-        // 单次失败不影响后续轮询;不向上抛出避免变成未处理的 Promise rejection
-        console.warn("getNodesLatestStatus 失败,等待下一轮:", err?.message || err)
-      })
-  }
-
   useEffect(() => {
-    getKomariNodes() // 尝试缓存
-    getData().then(() => {
-      setConnected(true)
-    })
+    let active = true
+    let requestRunning = false
+
+    const updateData = async () => {
+      if (requestRunning) return
+      requestRunning = true
+
+      try {
+        const rpc2 = SharedClient()
+        const [nodes, status] = await Promise.all([getKomariNodes(), rpc2.call("common:getNodesLatestStatus")])
+        if (!active) return
+
+        const message = { data: JSON.stringify(komariToNezhaWebsocketResponse(status, nodes)) }
+        setLastMessage(message)
+        setMessageHistory((prev) => [message, ...prev].slice(0, 30))
+        setConnected(true)
+      } catch (err) {
+        // 单次失败不影响后续轮询。
+        console.warn("加载服务器状态失败,等待下一轮:", err instanceof Error ? err.message : err)
+      } finally {
+        requestRunning = false
+      }
+    }
+
+    void updateData()
 
     intervalRef.current = setInterval(() => {
-      getData()
+      void updateData()
     }, 2000)
 
     return () => {
+      active = false
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
         intervalRef.current = null
