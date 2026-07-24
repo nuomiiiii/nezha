@@ -97,11 +97,11 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
   const { data: monitorData } = useQuery({
     queryKey: ["monitor", server_id, hours],
     queryFn: () => fetchMonitor(server_id, hours),
-    enabled: show,
     placeholderData: keepPreviousData,
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    refetchInterval: hours <= 24 ? 10000 : hours <= 168 ? 60000 : 300000,
+    refetchOnWindowFocus: show,
+    refetchInterval: show ? (hours <= 24 ? 10000 : hours <= 168 ? 60000 : 300000) : false,
+    staleTime: 10000,
   })
 
   const fallbackServerName = useMemo(() => {

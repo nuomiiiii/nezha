@@ -16,3 +16,9 @@ test("keeps the network chart canvas mounted during initial data loading", () =>
   assert.match(chartSource, /data=\{hasChartData \? processedData : \[\]\}/)
   assert.match(chartSource, /!hasChartData &&/)
 })
+
+test("prefetches initial monitor data while pausing hidden background polling", () => {
+  assert.doesNotMatch(chartSource, /enabled:\s*show/)
+  assert.match(chartSource, /refetchOnWindowFocus:\s*show/)
+  assert.match(chartSource, /refetchInterval:\s*show\s*\?/)
+})
