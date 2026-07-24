@@ -2,16 +2,17 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { useWebSocketContext } from "@/hooks/use-websocket-context"
 import { fetchMonitor } from "@/lib/nezha-api"
 import { cn, formatTime } from "@/lib/utils"
-import { NezhaMonitor, ServerMonitorChart } from "@/types/nezha-api"
+import { NezhaMonitor, NezhaWebsocketResponse, ServerMonitorChart } from "@/types/nezha-api"
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import * as React from "react"
 import { useCallback, useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { Area, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts"
 
-import NetworkChartLoading from "./NetworkChartLoading"
+import { LoadingSpinner } from "./loading/Loader"
 import { Label } from "./ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { Switch } from "./ui/switch"
@@ -90,6 +91,7 @@ const TIME_OPTIONS = [
 
 export function NetworkChart({ server_id, show }: { server_id: number; show: boolean }) {
   const { t } = useTranslation()
+  const { lastMessage } = useWebSocketContext()
   const [hours, setHours] = React.useState(24)
 
   const { data: monitorData } = useQuery({
@@ -102,19 +104,22 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
     refetchInterval: hours <= 24 ? 10000 : hours <= 168 ? 60000 : 300000,
   })
 
-  if (!monitorData) return <NetworkChartLoading />
+  const fallbackServerName = useMemo(() => {
+    if (!lastMessage) return ""
+    try {
+      const websocketData = JSON.parse(lastMessage.data) as NezhaWebsocketResponse
+      return websocketData.servers.find((server) => server.id === server_id)?.name || ""
+    } catch {
+      return ""
+    }
+  }, [lastMessage, server_id])
 
-  if (monitorData?.success && (!monitorData.data || monitorData.data.length === 0)) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16">
-        <p className="text-sm font-medium text-muted-foreground">{t("monitor.noData", "该服务器未配置延迟检测")}</p>
-      </div>
-    )
-  }
+  const monitorRecords = monitorData?.data || []
+  const isLoading = !monitorData
+  const isEmpty = !!monitorData?.success && monitorRecords.length === 0
+  const transformedData = monitorRecords.length > 0 ? transformData(monitorRecords) : {}
 
-  const transformedData = transformData(monitorData.data)
-
-  const formattedData = formatData(monitorData.data)
+  const formattedData = monitorRecords.length > 0 ? formatData(monitorRecords) : []
 
   const chartDataKey = Object.keys(transformedData)
 
@@ -135,9 +140,11 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
       chartDataKey={chartDataKey}
       chartConfig={initChartConfig}
       chartData={transformedData}
-      serverName={monitorData.data[0].server_name}
+      serverName={monitorRecords[0]?.server_name || fallbackServerName}
       formattedData={formattedData}
       hours={hours}
+      isLoading={isLoading}
+      isEmpty={isEmpty}
       onHoursChange={setHours}
     />
   )
@@ -150,6 +157,8 @@ export const NetworkChartClient = React.memo(function NetworkChart({
   serverName,
   formattedData,
   hours,
+  isLoading,
+  isEmpty,
   onHoursChange,
 }: {
   chartDataKey: string[]
@@ -158,9 +167,12 @@ export const NetworkChartClient = React.memo(function NetworkChart({
   serverName: string
   formattedData: ResultItem[]
   hours: number
+  isLoading: boolean
+  isEmpty: boolean
   onHoursChange: (hours: number) => void
 }) {
   const { t } = useTranslation()
+  const hasChartData = !isLoading && !isEmpty
 
   const customBackgroundImage = (window.CustomBackgroundImage as string) !== "" ? window.CustomBackgroundImage : undefined
 
@@ -199,6 +211,7 @@ export const NetworkChartClient = React.memo(function NetworkChart({
     () =>
       chartDataKey.map((key) => {
         const monitorData = chartData[key]
+        if (!monitorData?.length) return null
         const lastDelay = monitorData[monitorData.length - 1].avg_delay
 
         // Calculate average packet loss if available
@@ -300,11 +313,14 @@ export const NetworkChartClient = React.memo(function NetworkChart({
     let baseData = formattedData
     if (activeCharts.length === 1) {
       const selectedChart = activeCharts[0]
-      baseData = chartData[selectedChart].map((item) => ({
-        created_at: item.created_at,
-        avg_delay: item.avg_delay,
-        packet_loss: item.packet_loss ?? 0,
-      }))
+      const selectedData = chartData[selectedChart]
+      if (selectedData) {
+        baseData = selectedData.map((item) => ({
+          created_at: item.created_at,
+          avg_delay: item.avg_delay,
+          packet_loss: item.packet_loss ?? 0,
+        }))
+      }
     }
 
     if (!isPeakEnabled) {
@@ -403,15 +419,18 @@ export const NetworkChartClient = React.memo(function NetworkChart({
 
   return (
     <Card
+      aria-busy={isLoading}
+      data-state={isLoading ? "loading" : isEmpty ? "empty" : "ready"}
+      data-testid="network-chart-card"
       className={cn({
         "bg-card/70": customBackgroundImage,
       })}
     >
       <CardHeader className="flex flex-col items-stretch space-y-0 p-0 sm:flex-row">
-        <div className="flex flex-none flex-col justify-center gap-1 border-b px-6 py-4">
-          <CardTitle className="flex flex-none items-center gap-0.5 text-md">{serverName}</CardTitle>
-          <CardDescription className="text-xs">
-            {chartDataKey.length} {t("monitor.monitorCount")}
+        <div className="flex min-h-[104px] flex-none flex-col justify-center gap-1 border-b px-6 py-4 sm:min-w-[250px]">
+          <CardTitle className="flex min-h-5 flex-none items-center gap-0.5 text-md">{serverName || "\u00a0"}</CardTitle>
+          <CardDescription className="min-h-4 text-xs">
+            {isLoading ? "\u00a0" : `${chartDataKey.length} ${t("monitor.monitorCount")}`}
           </CardDescription>
           <div className="flex items-center mt-0.5 space-x-3">
             <Select value={String(hours)} onValueChange={(v) => onHoursChange(Number(v))}>
@@ -434,11 +453,11 @@ export const NetworkChartClient = React.memo(function NetworkChart({
             </div>
           </div>
         </div>
-        <div className="flex flex-wrap w-full">{chartButtons}</div>
+        <div className="flex min-h-[104px] w-full flex-wrap">{isLoading || isEmpty ? null : chartButtons}</div>
       </CardHeader>
       <CardContent className="pr-2 pl-0 py-4 sm:pt-6 sm:pb-6 sm:pr-6 sm:pl-2">
-        <div className="relative">
-          {activeCharts.length > 0 && (
+        <div className="relative h-[250px]">
+          {!isLoading && !isEmpty && activeCharts.length > 0 && (
             <button
               className="absolute -top-2 right-1 z-10 text-xs px-2 py-1 bg-stone-100/80 dark:bg-stone-800/80 backdrop-blur-sm rounded-[5px] text-muted-foreground hover:text-foreground transition-colors"
               onClick={clearAllSelections}
@@ -446,8 +465,16 @@ export const NetworkChartClient = React.memo(function NetworkChart({
               {t("monitor.clearSelections", "Clear")} ({activeCharts.length})
             </button>
           )}
-          <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
-            <ComposedChart accessibilityLayer data={processedData} margin={{ left: 12, right: 12 }}>
+          <ChartContainer
+            aria-hidden={!hasChartData}
+            config={chartConfig}
+            data-testid="network-chart-canvas"
+            className={cn(
+              "aspect-auto h-[250px] w-full transition-opacity duration-150 motion-reduce:transition-none",
+              hasChartData ? "opacity-100" : "pointer-events-none opacity-0",
+            )}
+          >
+            <ComposedChart accessibilityLayer data={hasChartData ? processedData : []} margin={{ left: 12, right: 12 }}>
               <CartesianGrid vertical={false} />
               <XAxis
                 dataKey="created_at"
@@ -533,6 +560,17 @@ export const NetworkChartClient = React.memo(function NetworkChart({
               {chartElements}
             </ComposedChart>
           </ChartContainer>
+          {!hasChartData && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              {isLoading ? (
+                <div className="text-muted-foreground" aria-label={t("common.loading", "Loading")}>
+                  <LoadingSpinner />
+                </div>
+              ) : (
+                <p className="text-sm font-medium text-muted-foreground">{t("monitor.noData", "该服务器未配置延迟检测")}</p>
+              )}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
