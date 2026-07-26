@@ -6,9 +6,11 @@ import RemainPercentBar from "./RemainPercentBar"
 export default function BillingInfo({
   parsedData,
   showProgress = true,
+  compact = false,
 }: {
   parsedData: PublicNoteData
   showProgress?: boolean
+  compact?: boolean
 }) {
   const { t } = useTranslation()
   if (!parsedData || !parsedData.billingDataMod) {
@@ -40,6 +42,32 @@ export default function BillingInfo({
         )
       }
     }
+  }
+
+  if (compact) {
+    const hasPrice = billingData.amount && billingData.amount !== "0" && billingData.amount !== "-1"
+
+    return (
+      <div className="min-w-0">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 text-[10px] leading-4 text-muted-foreground">
+          {hasPrice ? (
+            <span className="whitespace-nowrap">
+              {t("billingInfo.price")}: {billingPrice}
+            </span>
+          ) : billingData.amount === "-1" ? (
+            <span className="whitespace-nowrap text-green-600">{t("billingInfo.free")}</span>
+          ) : null}
+          <span className={cn("whitespace-nowrap", daysLeftObject.days < 0 && "text-red-600")}>
+            {daysLeftObject.days >= 0
+              ? `${t("billingInfo.remaining")}: ${isNeverExpire ? t("billingInfo.indefinite") : `${daysLeftObject.days} ${t("billingInfo.days")}`}`
+              : `${t("billingInfo.expired")}: ${daysLeftObject.days * -1} ${t("billingInfo.days")}`}
+          </span>
+        </div>
+        {showProgress && !isNeverExpire && daysLeftObject.days >= 0 && (
+          <RemainPercentBar className="mt-0.5" value={daysLeftObject.remainingPercentage * 100} />
+        )}
+      </div>
+    )
   }
 
   return daysLeftObject.days >= 0 ? (

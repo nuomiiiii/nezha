@@ -69,7 +69,9 @@ export default function ServerCard({ now, serverInfo, latencySummary }: { now: n
               <p className="truncate text-[10px] text-muted-foreground">
                 {systemName} · {online ? `${t("serverCard.uptime")} ${uptimeValue}` : "已离线"}
               </p>
-              {parsedData?.billingDataMod && <BillingInfo parsedData={parsedData} showProgress={!disableRemainingDaysBar} />}
+              {parsedData?.billingDataMod && (
+                <BillingInfo parsedData={parsedData} showProgress={!disableRemainingDaysBar} compact />
+              )}
             </div>
           </div>
           <span
