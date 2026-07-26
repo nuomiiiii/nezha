@@ -47,7 +47,6 @@ export default function BillingInfo({
 
   if (compact) {
     const hasPrice = billingData.amount && billingData.amount !== "0" && billingData.amount !== "-1"
-    const hasPriceLabel = Boolean(hasPrice || billingData.amount === "-1")
     const remainingTone = getBillingRemainingTone(daysLeftObject.days, isNeverExpire)
     const remainingLabel =
       daysLeftObject.days >= 0
@@ -59,30 +58,25 @@ export default function BillingInfo({
 
     return (
       <div className="min-w-0">
-        <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
           {hasPrice ? (
             <span className="inline-flex items-baseline gap-1.5 whitespace-nowrap">
               <span className="text-[10px] text-muted-foreground">{t("billingInfo.price")}</span>
-              <span className="text-xs font-bold leading-4 text-foreground">{billingPrice}</span>
+              <span className="text-[10px] font-normal leading-4 text-muted-foreground">{billingPrice}</span>
             </span>
           ) : billingData.amount === "-1" ? (
             <span className="inline-flex items-baseline gap-1.5 whitespace-nowrap">
               <span className="text-[10px] text-muted-foreground">{t("billingInfo.price")}</span>
-              <span className="text-xs font-bold leading-4 text-emerald-500 dark:text-emerald-400">
+              <span className="text-[10px] font-normal leading-4 text-emerald-500 dark:text-emerald-400">
                 {t("billingInfo.free")}
               </span>
             </span>
           ) : null}
-          <span
-            className={cn(
-              "inline-flex items-baseline gap-1.5 whitespace-nowrap",
-              hasPriceLabel && "border-l border-border pl-3",
-            )}
-          >
+          <span className="inline-flex items-baseline gap-1.5 whitespace-nowrap">
             <span className="text-[10px] text-muted-foreground">{remainingLabel}</span>
             <span
               className={cn(
-                "text-xs font-bold leading-4",
+                "text-[10px] font-normal leading-4",
                 remainingTone === "danger"
                   ? "text-red-500 dark:text-red-400"
                   : "text-emerald-500 dark:text-emerald-400",
