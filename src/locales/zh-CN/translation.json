@@ -119,6 +119,7 @@
   },
   "billingInfo": {
     "remaining": "剩余天数",
+    "remainingShort": "剩余",
     "error": "计算错误",
     "indefinite": "永久",
     "expired": "已过期",

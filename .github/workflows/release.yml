@@ -92,6 +92,20 @@ jobs:
           zip -r ../${ZIP_NAME} .
           cd ..
 
+          # Komari extracts themes on Linux. Reject Windows-style archive paths,
+          # which would leave dist/index.html missing and trigger the default theme.
+          unzip -Z1 "${ZIP_NAME}" > package-entries.txt
+          if awk 'index($0, sprintf("%c", 92)) { found = 1 } END { exit found ? 0 : 1 }' package-entries.txt; then
+            echo "Package contains Windows-style path separators"
+            exit 1
+          fi
+          for REQUIRED_ENTRY in komari-theme.json preview.png "${PREVIEW_FILE}" dist/index.html; do
+            grep -Fxq "${REQUIRED_ENTRY}" package-entries.txt || {
+              echo "Package is missing ${REQUIRED_ENTRY}"
+              exit 1
+            }
+          done
+
           # Expose as step output for later steps
           echo "zip_name=${ZIP_NAME}" >> $GITHUB_OUTPUT
           echo "Created package: ${ZIP_NAME}"

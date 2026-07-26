@@ -116,6 +116,7 @@
   },
   "billingInfo": {
     "remaining": "剩餘天數",
+    "remainingShort": "剩餘",
     "error": "獲取失敗",
     "indefinite": "無限期",
     "expired": "已過期",

@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "test": "node --test tests/ping-task-order.test.ts tests/currency-label.test.ts tests/network-chart-stability.test.ts tests/home-latency.test.ts tests/theme-settings.test.ts",
+    "test": "node --test tests/ping-task-order.test.ts tests/currency-label.test.ts tests/network-chart-stability.test.ts tests/home-latency.test.ts tests/theme-settings.test.ts tests/billing-status.test.ts",
     "lint:fix": "eslint --fix .",
     "format": "prettier --write .",
     "preview": "vite preview"

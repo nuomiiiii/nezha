@@ -1,4 +1,5 @@
 import { PublicNoteData, cn, formatBillingAmount, getDaysBetweenDatesWithAutoRenewal } from "@/lib/utils"
+import { getBillingRemainingTone } from "@/lib/billing-status"
 import { useTranslation } from "react-i18next"
 
 import RemainPercentBar from "./RemainPercentBar"
@@ -47,26 +48,48 @@ export default function BillingInfo({
   if (compact) {
     const hasPrice = billingData.amount && billingData.amount !== "0" && billingData.amount !== "-1"
     const hasPriceLabel = Boolean(hasPrice || billingData.amount === "-1")
+    const remainingTone = getBillingRemainingTone(daysLeftObject.days, isNeverExpire)
+    const remainingLabel =
+      daysLeftObject.days >= 0
+        ? t("billingInfo.remainingShort", { defaultValue: t("billingInfo.remaining") })
+        : t("billingInfo.expired")
+    const remainingValue = isNeverExpire
+      ? t("billingInfo.indefinite")
+      : `${Math.abs(daysLeftObject.days)} ${t("billingInfo.days")}`
 
     return (
       <div className="min-w-0">
-        <div className="flex min-w-0 flex-wrap items-center text-[10px] leading-4 text-muted-foreground">
+        <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
           {hasPrice ? (
-            <span className="whitespace-nowrap">
-              {t("billingInfo.price")}: {billingPrice}
+            <span className="inline-flex items-baseline gap-1.5 whitespace-nowrap">
+              <span className="text-[10px] text-muted-foreground">{t("billingInfo.price")}</span>
+              <span className="text-xs font-bold leading-4 text-foreground">{billingPrice}</span>
             </span>
           ) : billingData.amount === "-1" ? (
-            <span className="whitespace-nowrap text-green-600">{t("billingInfo.free")}</span>
-          ) : null}
-          {hasPriceLabel && (
-            <span className="shrink-0 text-muted-foreground/60" aria-hidden="true">
-              ·
+            <span className="inline-flex items-baseline gap-1.5 whitespace-nowrap">
+              <span className="text-[10px] text-muted-foreground">{t("billingInfo.price")}</span>
+              <span className="text-xs font-bold leading-4 text-emerald-500 dark:text-emerald-400">
+                {t("billingInfo.free")}
+              </span>
             </span>
-          )}
-          <span className={cn("whitespace-nowrap", daysLeftObject.days < 0 && "text-red-600")}>
-            {daysLeftObject.days >= 0
-              ? `${t("billingInfo.remaining")}: ${isNeverExpire ? t("billingInfo.indefinite") : `${daysLeftObject.days} ${t("billingInfo.days")}`}`
-              : `${t("billingInfo.expired")}: ${daysLeftObject.days * -1} ${t("billingInfo.days")}`}
+          ) : null}
+          <span
+            className={cn(
+              "inline-flex items-baseline gap-1.5 whitespace-nowrap",
+              hasPriceLabel && "border-l border-border pl-3",
+            )}
+          >
+            <span className="text-[10px] text-muted-foreground">{remainingLabel}</span>
+            <span
+              className={cn(
+                "text-xs font-bold leading-4",
+                remainingTone === "danger"
+                  ? "text-red-500 dark:text-red-400"
+                  : "text-emerald-500 dark:text-emerald-400",
+              )}
+            >
+              {remainingValue}
+            </span>
           </span>
         </div>
         {showProgress && !isNeverExpire && daysLeftObject.days >= 0 && (
