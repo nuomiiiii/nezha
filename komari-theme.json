@@ -1,10 +1,11 @@
 {
-    "name": "nezha",
+    "name": "Nezha",
     "short": "nezha",
-    "description": "nezha Theme for Komari Monitor",
-    "version": "2.1.7",
+    "description": "Nezha Theme for Komari Monitor",
+    "version": "3.0.0",
     "author": "Nomi",
     "url": "https://github.com/nuomiiiii/nezha",
+    "upstream": "https://github.com/BITJEBE/nezha-BITJEBE",
     "preview": "preview.png",
     "configuration": {
         "type": "managed",
@@ -96,10 +97,17 @@
                 "help": "开启后隐藏首页的动画人物插图。默认已开启（隐藏）。"
             },
             {
+                "key": "DisableOverviewWave",
+                "name": "禁用概览手掌",
+                "type": "switch",
+                "default": true,
+                "help": "开启后隐藏首页概览标题左侧的手掌图标。默认已开启（隐藏）。"
+            },
+            {
                 "key": "ForceUseSvgFlag",
                 "name": "使用SVG国旗",
                 "type": "switch",
-                "default": false,
+                "default": true,
                 "help": "开启后使用SVG国旗图标替代Emoji国旗，在部分系统上显示效果更好。"
             },
             {
@@ -159,6 +167,13 @@
                 "type": "title"
             },
             {
+                "key": "FixedLeftServerName",
+                "name": "固定左侧服务器名称",
+                "type": "switch",
+                "default": false,
+                "help": "开启后服务器名称固定在卡片左侧，资源信息显示在右侧；该模式优先于固定顶部服务器名称。"
+            },
+            {
                 "key": "FixedTopServerName",
                 "name": "固定顶部服务器名称",
                 "type": "switch",
@@ -169,7 +184,7 @@
                 "key": "ShowNetTransfer",
                 "name": "显示上下行流量",
                 "type": "switch",
-                "default": false,
+                "default": true,
                 "help": "开启后在服务器卡片底部显示上传和下载总流量。"
             },
             {
@@ -212,6 +227,17 @@
                 "type": "input",
                 "default": "",
                 "help": "JSON对象，按服务器UUID、卡片ID或名称指定货币，例如 {\"Tokyo\":\"JPY\",\"spartanhost\":\"USD\"}。【更推荐】直接在 Komari 后端服务器的 tags 字段里加 <JPY>/<USD>/<CNY> 等元标签，例如把 KDDI 的 tags 改成 \"Tokyonline; KDDI; <JPY>\"，主题会自动识别且不在前端显示该标签。优先级：本JSON > tags元标签 > 默认账单货币 > 后端currency字段。"
+            },
+            {
+                "name": "延迟监测设置",
+                "type": "title"
+            },
+            {
+                "key": "ShowHomeLatency",
+                "name": "显示首页延迟监测",
+                "type": "switch",
+                "default": true,
+                "help": "开启后在首页服务器卡片中显示最近一小时的延迟、丢包率和趋势；没有数据时显示 --，需先在后台延迟监测中创建任务；关闭后同时停止相关数据查询。"
             },
             {
                 "name": "流量进度条设置",

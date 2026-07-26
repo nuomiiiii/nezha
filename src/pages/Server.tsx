@@ -14,7 +14,8 @@ import { SORT_ORDERS, SORT_TYPES } from "@/context/sort-context"
 import { useSort } from "@/hooks/use-sort"
 import { useStatus } from "@/hooks/use-status"
 import { useWebSocketContext } from "@/hooks/use-websocket-context"
-import { fetchServerGroup } from "@/lib/nezha-api"
+import { fetchHomeLatency, fetchServerGroup } from "@/lib/nezha-api"
+import type { HomeLatencySummary } from "@/lib/home-latency"
 import { cn, formatNezhaInfo } from "@/lib/utils"
 import { NezhaWebsocketResponse } from "@/types/nezha-api"
 import { ServerGroup } from "@/types/nezha-api"
@@ -22,6 +23,14 @@ import { ArrowDownIcon, ArrowUpIcon, ArrowsUpDownIcon, ChartBarSquareIcon, MapIc
 import { useQuery } from "@tanstack/react-query"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
+
+const EMPTY_HOME_LATENCY: HomeLatencySummary = {
+  latency: null,
+  packetLoss: null,
+  latencyHistory: [],
+  packetLossHistory: [],
+  updatedAt: null,
+}
 
 export default function Servers() {
   const { t } = useTranslation()
@@ -43,6 +52,17 @@ export default function Servers() {
   const themeSettings = window as unknown as Record<string, unknown>
   const showVisitorCapsule = themeSettings.ShowVisitorCapsule === true
   const showAssetCard = themeSettings.ShowAssetCard === true
+  const showHomeLatency = themeSettings.ShowHomeLatency !== false
+  const nezhaWsData = lastMessage ? (JSON.parse(lastMessage.data) as NezhaWebsocketResponse) : null
+  const latencyEntityIds = (nezhaWsData?.servers || []).map((server) => server.uuid).filter((uuid): uuid is string => !!uuid)
+  const { data: homeLatency = {} } = useQuery({
+    queryKey: ["home-latency", latencyEntityIds],
+    queryFn: () => fetchHomeLatency(latencyEntityIds),
+    enabled: showHomeLatency && latencyEntityIds.length > 0,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
+  })
 
   const restoreScrollPosition = () => {
     const savedPosition = sessionStorage.getItem("scrollPosition")
@@ -104,8 +124,6 @@ export default function Servers() {
 
     restoreScrollPosition()
   }, [])
-
-  const nezhaWsData = lastMessage ? (JSON.parse(lastMessage.data) as NezhaWebsocketResponse) : null
 
   const groupTabs = [
     "All",
@@ -377,14 +395,24 @@ export default function Servers() {
       {inline === "1" && (
         <section ref={containerRef} className="flex flex-col gap-2 overflow-x-scroll scrollbar-hidden mt-6 server-inline-list">
           {filteredServers.map((serverInfo) => (
-            <ServerCardInline now={nezhaWsData.now} key={serverInfo.id} serverInfo={serverInfo} />
+            <ServerCardInline
+              now={nezhaWsData.now}
+              key={serverInfo.id}
+              serverInfo={serverInfo}
+              latencySummary={showHomeLatency ? (serverInfo.uuid ? homeLatency[serverInfo.uuid] : undefined) || EMPTY_HOME_LATENCY : undefined}
+            />
           ))}
         </section>
       )}
       {inline === "0" && (
         <section ref={containerRef} className="grid grid-cols-1 gap-2 md:grid-cols-2 mt-6 server-card-list">
           {filteredServers.map((serverInfo) => (
-            <ServerCard now={nezhaWsData.now} key={serverInfo.id} serverInfo={serverInfo} />
+            <ServerCard
+              now={nezhaWsData.now}
+              key={serverInfo.id}
+              serverInfo={serverInfo}
+              latencySummary={showHomeLatency ? (serverInfo.uuid ? homeLatency[serverInfo.uuid] : undefined) || EMPTY_HOME_LATENCY : undefined}
+            />
           ))}
         </section>
       )}

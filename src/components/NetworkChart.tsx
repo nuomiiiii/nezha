@@ -92,7 +92,7 @@ const TIME_OPTIONS = [
 export function NetworkChart({ server_id, show }: { server_id: number; show: boolean }) {
   const { t } = useTranslation()
   const { lastMessage } = useWebSocketContext()
-  const [hours, setHours] = React.useState(24)
+  const [hours, setHours] = React.useState(1)
 
   const { data: monitorData } = useQuery({
     queryKey: ["monitor", server_id, hours],

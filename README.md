@@ -1,8 +1,14 @@
-# nezha
+# Nezha
 
-基于 [nezha-dash-v1](https://github.com/Akizon77/nezha-dash-v1) 二次开发的 [Komari Monitor](https://github.com/komari-monitor/komari) 自定义主题。
+基于 [BITJEBE/nezha-BITJEBE](https://github.com/BITJEBE/nezha-BITJEBE) 二次开发的 [Komari Monitor](https://github.com/komari-monitor/komari) 自定义主题。
 
 ## 功能特性
+
+### 首页概览与延迟监测
+- 首页服务器卡片默认采用全新的概览布局，集中展示运行状态、资源占用、实时速率、延迟、丢包率与流量信息
+- 原有“固定左侧服务器名称”和“固定顶部服务器名称”布局继续保留，可在主题管理中切换
+- 首页延迟监测默认开启，汇总最近一小时的延迟、丢包率与趋势；关闭后同时停止相关数据查询
+- 网络详情页默认进入 `1H` 视图，减少首次查看时的等待
 
 ### 流量进度条
 - 服务器卡片内置流量使用进度条（无需外部脚本）
@@ -78,7 +84,7 @@ So-net<red>;1Gbps<green>;CN2 GIA<blue>
 
 ## 致谢
 
-- 原始主题：[nezha-dash-v1](https://github.com/Akizon77/nezha-dash-v1)，作者 [Akizon77](https://github.com/Akizon77)
+- 上游主题：[BITJEBE/nezha-BITJEBE](https://github.com/BITJEBE/nezha-BITJEBE)，作者 [BITJEBE](https://github.com/BITJEBE)
 - 监控后端：[Komari Monitor](https://github.com/komari-monitor/komari)
 
 ## 贡献者

@@ -10,6 +10,8 @@ import {
 } from "@/types/nezha-api"
 import { DateTime } from "luxon"
 
+import { summarizeHomeLatencySamples } from "./home-latency"
+import type { HomeLatencySample, HomeLatencySummary } from "./home-latency"
 import { getKomariNodes, uuidToNumber } from "./utils"
 import { orderMonitorsByPingTasks } from "./ping-task-order"
 
@@ -547,6 +549,44 @@ export const fetchMonitor = async (server_id: number, hours: number = 24): Promi
   }
 
   return { success: true, data }
+}
+
+export const fetchHomeLatency = async (entityIds: string[]): Promise<Record<string, HomeLatencySummary>> => {
+  const uniqueEntityIds = [...new Set(entityIds.filter(Boolean))]
+  if (uniqueEntityIds.length === 0) return {}
+
+  try {
+    const metricData = await fetchPingMetricSeries({ entity_ids: uniqueEntityIds, hours: 1 }, 20)
+    const lossLookup = buildPingLossLookup(metricData.series)
+    const samples: HomeLatencySample[] = []
+
+    for (const series of metricData.series) {
+      const taskId = metricTaskId(series)
+      if (series.metric_key !== PING_LATENCY_METRIC || !series.entity_id || !taskId) continue
+      const lossPoints = lossLookup.get(metricSeriesKey(series))
+
+      for (const point of series.points || []) {
+        const timestamp = metricPointTime(point)
+        if (timestamp === null || point.value === null || point.value === undefined) continue
+        const count = metricPointCount(point)
+        const loss = lossPoints?.get(timestamp)
+        const lossRatio = loss?.ratio ?? (Number(point.value) < 0 ? 1 : 0)
+
+        samples.push({
+          entityId: series.entity_id,
+          timestamp,
+          latency: latencyWithoutLoss(point.value, count, loss),
+          lossRatio,
+          count: loss?.count ?? count,
+        })
+      }
+    }
+
+    return summarizeHomeLatencySamples(samples)
+  } catch (error) {
+    if (isMetricApiUnavailable(error)) return {}
+    throw error
+  }
 }
 export const fetchServerUptime = async (): Promise<ServiceResponse> => {
   const kmNodes: Record<string, any> = await getKomariNodes()
