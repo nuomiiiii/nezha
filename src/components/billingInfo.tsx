@@ -46,10 +46,11 @@ export default function BillingInfo({
 
   if (compact) {
     const hasPrice = billingData.amount && billingData.amount !== "0" && billingData.amount !== "-1"
+    const hasPriceLabel = Boolean(hasPrice || billingData.amount === "-1")
 
     return (
       <div className="min-w-0">
-        <div className="flex min-w-0 flex-wrap items-center gap-x-3 text-[10px] leading-4 text-muted-foreground">
+        <div className="flex min-w-0 flex-wrap items-center text-[10px] leading-4 text-muted-foreground">
           {hasPrice ? (
             <span className="whitespace-nowrap">
               {t("billingInfo.price")}: {billingPrice}
@@ -57,6 +58,11 @@ export default function BillingInfo({
           ) : billingData.amount === "-1" ? (
             <span className="whitespace-nowrap text-green-600">{t("billingInfo.free")}</span>
           ) : null}
+          {hasPriceLabel && (
+            <span className="shrink-0 text-muted-foreground/60" aria-hidden="true">
+              ·
+            </span>
+          )}
           <span className={cn("whitespace-nowrap", daysLeftObject.days < 0 && "text-red-600")}>
             {daysLeftObject.days >= 0
               ? `${t("billingInfo.remaining")}: ${isNeverExpire ? t("billingInfo.indefinite") : `${daysLeftObject.days} ${t("billingInfo.days")}`}`
