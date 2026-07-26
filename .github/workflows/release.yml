@@ -62,7 +62,10 @@ jobs:
       - name: Verify required files exist
         run: |
           echo "Checking required files..."
+          PREVIEW_FILE=$(jq -r '.preview' komari-theme.json)
+          test -n "$PREVIEW_FILE" && test "$PREVIEW_FILE" != "null" || (echo "Theme preview is not configured" && exit 1)
           ls -la preview.png || (echo "preview.png not found" && exit 1)
+          ls -la "$PREVIEW_FILE" || (echo "$PREVIEW_FILE not found" && exit 1)
           ls -la komari-theme.json || (echo "komari-theme.json not found" && exit 1)
           ls -la dist/ || (echo "dist/ directory not found" && exit 1)
           echo "All required files found!"
@@ -74,7 +77,11 @@ jobs:
           mkdir -p theme-package
 
           # Copy required files
+          PREVIEW_FILE=$(jq -r '.preview' komari-theme.json)
           cp preview.png theme-package/
+          if [ "$PREVIEW_FILE" != "preview.png" ]; then
+            cp "$PREVIEW_FILE" theme-package/
+          fi
           cp komari-theme.json theme-package/
           cp -r dist/ theme-package/
 
