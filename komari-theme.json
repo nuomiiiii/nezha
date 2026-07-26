@@ -181,6 +181,13 @@
                 "help": "开启后服务器名称固定在卡片顶部，资源信息显示在下方。"
             },
             {
+                "key": "DisableRemainingDaysBar",
+                "name": "禁用剩余天数时间条",
+                "type": "switch",
+                "default": true,
+                "help": "开启后隐藏服务器卡片中剩余天数下方的时间条。默认已开启（隐藏）。"
+            },
+            {
                 "key": "ShowNetTransfer",
                 "name": "显示上下行流量",
                 "type": "switch",

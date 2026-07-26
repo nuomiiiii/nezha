@@ -38,6 +38,7 @@ export default function ServerCard({ now, serverInfo, latencySummary }: { now: n
   const win = window as unknown as Record<string, unknown>
   const fixedLeftServerName = win.FixedLeftServerName === true
   const fixedTopServerName = !fixedLeftServerName && win.FixedTopServerName === true
+  const disableRemainingDaysBar = win.DisableRemainingDaysBar !== false
 
   const parsedData = parsePublicNote(public_note)
 
@@ -68,7 +69,7 @@ export default function ServerCard({ now, serverInfo, latencySummary }: { now: n
               <p className="truncate text-[10px] text-muted-foreground">
                 {systemName} · {online ? `${t("serverCard.uptime")} ${uptimeValue}` : "已离线"}
               </p>
-              {parsedData?.billingDataMod && <BillingInfo parsedData={parsedData} />}
+              {parsedData?.billingDataMod && <BillingInfo parsedData={parsedData} showProgress={!disableRemainingDaysBar} />}
             </div>
           </div>
           <span
@@ -193,7 +194,7 @@ export default function ServerCard({ now, serverInfo, latencySummary }: { now: n
               "lg:hidden": fixedTopServerName,
             })}
           >
-            {parsedData?.billingDataMod && <BillingInfo parsedData={parsedData} />}
+            {parsedData?.billingDataMod && <BillingInfo parsedData={parsedData} showProgress={!disableRemainingDaysBar} />}
           </div>
         </div>
       </section>
@@ -202,7 +203,7 @@ export default function ServerCard({ now, serverInfo, latencySummary }: { now: n
           "lg:flex": fixedTopServerName,
         })}
       >
-        {parsedData?.billingDataMod && <BillingInfo parsedData={parsedData} />}
+        {parsedData?.billingDataMod && <BillingInfo parsedData={parsedData} showProgress={!disableRemainingDaysBar} />}
       </div>
       <div className="flex w-full min-w-0 flex-col items-center gap-2 lg:items-start">
         <section
@@ -313,7 +314,7 @@ export default function ServerCard({ now, serverInfo, latencySummary }: { now: n
               "lg:hidden": fixedTopServerName,
             })}
           >
-            {parsedData?.billingDataMod && <BillingInfo parsedData={parsedData} />}
+            {parsedData?.billingDataMod && <BillingInfo parsedData={parsedData} showProgress={!disableRemainingDaysBar} />}
           </div>
         </div>
       </section>
@@ -322,7 +323,7 @@ export default function ServerCard({ now, serverInfo, latencySummary }: { now: n
           "lg:flex": fixedTopServerName,
         })}
       >
-        {parsedData?.billingDataMod && <BillingInfo parsedData={parsedData} />}
+        {parsedData?.billingDataMod && <BillingInfo parsedData={parsedData} showProgress={!disableRemainingDaysBar} />}
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <ServerLatencySummary summary={latencySummary} />

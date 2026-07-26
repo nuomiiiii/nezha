@@ -32,6 +32,10 @@ test("uses the current traffic and flag presentation by default", () => {
   assert.equal(setting("ShowNetTransfer")?.default, true)
 })
 
+test("hides the remaining-days time bar by default", () => {
+  assert.equal(setting("DisableRemainingDaysBar")?.default, true)
+})
+
 test("shows home latency by default", () => {
   assert.equal(setting("ShowHomeLatency")?.default, true)
 })

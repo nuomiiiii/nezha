@@ -3,7 +3,13 @@ import { useTranslation } from "react-i18next"
 
 import RemainPercentBar from "./RemainPercentBar"
 
-export default function BillingInfo({ parsedData }: { parsedData: PublicNoteData }) {
+export default function BillingInfo({
+  parsedData,
+  showProgress = true,
+}: {
+  parsedData: PublicNoteData
+  showProgress?: boolean
+}) {
   const { t } = useTranslation()
   if (!parsedData || !parsedData.billingDataMod) {
     return null
@@ -48,7 +54,7 @@ export default function BillingInfo({ parsedData }: { parsedData: PublicNoteData
       <div className={cn("text-[10px] text-muted-foreground")}>
         {t("billingInfo.remaining")}: {isNeverExpire ? t("billingInfo.indefinite") : daysLeftObject.days + " " + t("billingInfo.days")}
       </div>
-      {!isNeverExpire && <RemainPercentBar className="mt-0.5" value={daysLeftObject.remainingPercentage * 100} />}
+      {showProgress && !isNeverExpire && <RemainPercentBar className="mt-0.5" value={daysLeftObject.remainingPercentage * 100} />}
     </>
   ) : (
     <>

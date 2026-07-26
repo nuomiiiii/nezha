@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils"
 import type { HomeLatencySummary } from "@/lib/home-latency"
 import { useTranslation } from "react-i18next"
 
-const SEGMENT_COUNT = 20
+const SEGMENT_COUNT = 12
 
 function paddedHistory(values: Array<number | null> | undefined): Array<number | null> {
   const history = (values || []).slice(-SEGMENT_COUNT)
@@ -44,7 +44,7 @@ function MetricSummary({
         <span className="truncate text-muted-foreground">{label}</span>
         <span className="shrink-0 font-medium tabular-nums text-foreground">{formattedValue}</span>
       </div>
-      <div className="mt-1 grid h-[3px] grid-cols-[repeat(20,minmax(0,1fr))] gap-[2px]" aria-hidden="true">
+      <div className="mt-1 grid h-[3px] grid-cols-[repeat(12,minmax(0,1fr))] gap-[2px]" aria-hidden="true">
         {paddedHistory(history).map((item, index) => (
           <span key={index} className={cn("min-w-[2px] rounded-sm", segmentColor(kind, item))} />
         ))}
