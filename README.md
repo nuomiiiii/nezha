@@ -4,11 +4,18 @@
 [![Komari Theme](https://img.shields.io/badge/Komari-Theme-6366F1)](https://github.com/komari-monitor/theme-market)
 [![License](https://img.shields.io/github/license/nuomiiiii/nezha)](LICENSE)
 
-基于 [BITJEBE/nezha-BITJEBE](https://github.com/BITJEBE/nezha-BITJEBE) 二次开发的 [Komari Monitor](https://github.com/komari-monitor/komari) 自定义主题。当前版本为 `3.0.4`，已进入 Komari 官方主题商城。
+基于 [BITJEBE/nezha-BITJEBE](https://github.com/BITJEBE/nezha-BITJEBE) 二次开发的 [Komari Monitor](https://github.com/komari-monitor/komari) 自定义主题。当前版本为 `3.0.5`，已进入 Komari 官方主题商城。
 
 ![Nezha 主题预览](preview.png)
 
 ## 最近更新
+
+### 3.0.5
+
+- 首页有探测记录但完全丢包时显示红色；完全没有探测记录时继续显示灰色，避免混淆故障与无数据。
+- 详情页完全丢包且没有有效 RTT 时保留断线，不再把丢包点与前后正常延迟错误连接。
+- 部分丢包时保留成功探测的真实 RTT，延迟曲线继续按有效数据展示。
+- 保持 Komari `1.1.8`、`1.2.5-fix2`、`1.2.7`、`1.3.0` 与本分支 `2.1.x` 的新旧延迟接口兼容。
 
 ### 3.0.4
 
