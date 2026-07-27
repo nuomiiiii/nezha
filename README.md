@@ -143,9 +143,6 @@ So-net<red>;1Gbps<green>;CN2 GIA<blue>;<JPY>
 ## 致谢
 
 - 上游主题：[BITJEBE/nezha-BITJEBE](https://github.com/BITJEBE/nezha-BITJEBE)，作者 [BITJEBE](https://github.com/BITJEBE)
-- 监控项目：[Komari Monitor](https://github.com/nuomiiiii/komari)
-- 项目维护：[nuomiiiii](https://github.com/nuomiiiii)
-
 ## 许可证
 
 [Apache License 2.0](LICENSE)
