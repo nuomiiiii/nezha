@@ -4,11 +4,18 @@
 [![Komari Theme](https://img.shields.io/badge/Komari-Theme-6366F1)](https://github.com/komari-monitor/theme-market)
 [![License](https://img.shields.io/github/license/nuomiiiii/nezha)](LICENSE)
 
-基于 [BITJEBE/nezha-BITJEBE](https://github.com/BITJEBE/nezha-BITJEBE) 二次开发的 [Komari Monitor](https://github.com/komari-monitor/komari) 自定义主题。当前版本为 `3.0.2`，已进入 Komari 官方主题商城。
+基于 [BITJEBE/nezha-BITJEBE](https://github.com/BITJEBE/nezha-BITJEBE) 二次开发的 [Komari Monitor](https://github.com/komari-monitor/komari) 自定义主题。当前版本为 `3.0.3`，已进入 Komari 官方主题商城。
 
 ![Nezha 主题预览](preview.png)
 
 ## 最近更新
+
+### 3.0.3
+
+- 修复 Komari `1.1.8`、`1.2.5-fix2` 等旧版本稀疏探测记录下，丢包率文字与趋势色块口径不一致的问题。
+- 首页统一展示最近一小时的 12 个五分钟时间桶；缺失数据使用灰色占位，丢包率按同一窗口内的真实探测次数加权。
+- 保持 Komari `1.2.7`、`1.3.0` 与本分支 `2.1.x` 的 V4 指标接口兼容。
+- 默认黑底 N 图标替换为新版 Komari Logo；自定义 Logo 预加载成功后再切换，避免加载时来回闪烁。
 
 ### 3.0.2
 
@@ -143,6 +150,9 @@ So-net<red>;1Gbps<green>;CN2 GIA<blue>;<JPY>
 ## 致谢
 
 - 上游主题：[BITJEBE/nezha-BITJEBE](https://github.com/BITJEBE/nezha-BITJEBE)，作者 [BITJEBE](https://github.com/BITJEBE)
+- 监控项目：[Komari Monitor](https://github.com/nuomiiiii/komari)
+- 项目维护：[nuomiiiii](https://github.com/nuomiiiii)
+
 ## 许可证
 
 [Apache License 2.0](LICENSE)
