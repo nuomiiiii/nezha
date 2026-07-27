@@ -4,11 +4,18 @@
 [![Komari Theme](https://img.shields.io/badge/Komari-Theme-6366F1)](https://github.com/komari-monitor/theme-market)
 [![License](https://img.shields.io/github/license/nuomiiiii/nezha)](LICENSE)
 
-基于 [BITJEBE/nezha-BITJEBE](https://github.com/BITJEBE/nezha-BITJEBE) 二次开发的 [Komari Monitor](https://github.com/komari-monitor/komari) 自定义主题。当前版本为 `3.0.3`，已进入 Komari 官方主题商城。
+基于 [BITJEBE/nezha-BITJEBE](https://github.com/BITJEBE/nezha-BITJEBE) 二次开发的 [Komari Monitor](https://github.com/komari-monitor/komari) 自定义主题。当前版本为 `3.0.4`，已进入 Komari 官方主题商城。
 
 ![Nezha 主题预览](preview.png)
 
 ## 最近更新
+
+### 3.0.4
+
+- 修复刷新首页时延迟与丢包率晚于其他卡片内容出现的问题；刷新时先显示当前会话最近一次成功结果，并在后台更新。
+- 旧版 Komari 会记住已确认的延迟接口能力，刷新时不再重复等待一次不支持的 V4 请求。
+- 会话缓存仅用于刷新过渡，不写入服务端、不改变历史数据或统计精度。
+- 兼容 Komari `1.1.8`、`1.2.5-fix2`、`1.2.7`、`1.3.0` 与本分支 `2.1.x`。
 
 ### 3.0.3
 
