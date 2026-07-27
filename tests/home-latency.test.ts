@@ -2,6 +2,46 @@ import assert from "node:assert/strict"
 import test from "node:test"
 
 import { summarizeHomeLatencySamples } from "../src/lib/home-latency.ts"
+import { readHomeLatencyCache, writeHomeLatencyCache } from "../src/lib/home-latency.ts"
+
+function memoryStorage() {
+  const values = new Map<string, string>()
+  return {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => values.set(key, value),
+  }
+}
+
+test("restores recent latency values during a page refresh", () => {
+  const storage = memoryStorage()
+  const summary = {
+    latency: 32,
+    packetLoss: 1.5,
+    latencyHistory: [30, 32],
+    packetLossHistory: [0, 3],
+    updatedAt: 120_000,
+  }
+
+  writeHomeLatencyCache(storage, { "node-a": summary }, 200_000)
+
+  assert.deepEqual(readHomeLatencyCache(storage, ["node-a"], 210_000), { "node-a": summary })
+})
+
+test("ignores stale or unrelated latency cache entries", () => {
+  const storage = memoryStorage()
+  const summary = {
+    latency: 32,
+    packetLoss: 0,
+    latencyHistory: [32],
+    packetLossHistory: [0],
+    updatedAt: 120_000,
+  }
+
+  writeHomeLatencyCache(storage, { "node-a": summary }, 200_000)
+
+  assert.equal(readHomeLatencyCache(storage, ["node-b"], 210_000), undefined)
+  assert.equal(readHomeLatencyCache(storage, ["node-a"], 200_000 + 5 * 60_000 + 1), undefined)
+})
 
 test("combines multiple ping tasks into one weighted server summary", () => {
   const bucket = 5 * 60_000
