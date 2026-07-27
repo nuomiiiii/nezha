@@ -15,6 +15,7 @@ import { useSort } from "@/hooks/use-sort"
 import { useStatus } from "@/hooks/use-status"
 import { useWebSocketContext } from "@/hooks/use-websocket-context"
 import { fetchHomeLatency, fetchServerGroup } from "@/lib/nezha-api"
+import { readHomeLatencyCache, writeHomeLatencyCache } from "@/lib/home-latency"
 import type { HomeLatencySummary } from "@/lib/home-latency"
 import { cn, formatNezhaInfo } from "@/lib/utils"
 import { NezhaWebsocketResponse } from "@/types/nezha-api"
@@ -30,6 +31,14 @@ const EMPTY_HOME_LATENCY: HomeLatencySummary = {
   latencyHistory: [],
   packetLossHistory: [],
   updatedAt: null,
+}
+
+function homeLatencyStorage(): Storage | null {
+  try {
+    return window.sessionStorage
+  } catch {
+    return null
+  }
 }
 
 export default function Servers() {
@@ -57,7 +66,12 @@ export default function Servers() {
   const latencyEntityIds = (nezhaWsData?.servers || []).map((server) => server.uuid).filter((uuid): uuid is string => !!uuid)
   const { data: homeLatency = {} } = useQuery({
     queryKey: ["home-latency", latencyEntityIds],
-    queryFn: () => fetchHomeLatency(latencyEntityIds),
+    queryFn: async () => {
+      const data = await fetchHomeLatency(latencyEntityIds)
+      writeHomeLatencyCache(homeLatencyStorage(), data)
+      return data
+    },
+    placeholderData: () => readHomeLatencyCache(homeLatencyStorage(), latencyEntityIds),
     enabled: showHomeLatency && latencyEntityIds.length > 0,
     staleTime: 15_000,
     refetchInterval: 30_000,
