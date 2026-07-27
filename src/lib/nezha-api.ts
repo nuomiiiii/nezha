@@ -180,18 +180,15 @@ function monitorDataFromMetricSeries(
       packet_loss: [],
       sample_count: [],
     }
-    let lastGood = 0
-
     for (const point of points) {
       const time = metricPointTime(point)
       if (time === null || point.value === null || point.value === undefined) continue
       const count = metricPointCount(point)
       const loss = lossPoints?.get(time)
       const latency = latencyWithoutLoss(point.value, count, loss)
-      if (latency !== null) lastGood = latency
 
       monitor.created_at.push(time)
-      monitor.avg_delay.push(latency ?? lastGood)
+      monitor.avg_delay.push(latency)
       monitor.packet_loss!.push((loss?.ratio ?? (Number(point.value) < 0 ? 1 : 0)) * 100)
       monitor.sample_count!.push(loss?.count ?? count)
     }
@@ -480,17 +477,8 @@ export const fetchMonitor = async (server_id: number, hours: number = 24): Promi
       packetLoss.push(Number(ema.toFixed(2)))
     }
 
-    // 对延迟数据：将 -1 替换为上一个正常值（平滑显示）
-    const delays: number[] = []
-    let lastGood = 0
-    for (const v of rawVals) {
-      if (v >= 0) {
-        lastGood = v
-        delays.push(v)
-      } else {
-        delays.push(lastGood)
-      }
-    }
+    // 对延迟数据：丢包无有效 RTT 时保留 null，以在图表中显示断线
+    const delays: Array<number | null> = rawVals.map((value) => (value !== null && value >= 0 ? value : null))
 
     const timestamps = zip.map((z) => z.t)
 
@@ -560,30 +548,30 @@ export const fetchHomeLatency = async (entityIds: string[]): Promise<Record<stri
   if (readPingApiMode(pingApiStorage) !== "legacy") {
     try {
       const metricData = await fetchPingMetricSeries({ entity_ids: uniqueEntityIds, hours: 1 }, 20)
-    const lossLookup = buildPingLossLookup(metricData.series)
-    const samples: HomeLatencySample[] = []
+      const lossLookup = buildPingLossLookup(metricData.series)
+      const samples: HomeLatencySample[] = []
 
-    for (const series of metricData.series) {
-      const taskId = metricTaskId(series)
-      if (series.metric_key !== PING_LATENCY_METRIC || !series.entity_id || !taskId) continue
-      const lossPoints = lossLookup.get(metricSeriesKey(series))
+      for (const series of metricData.series) {
+        const taskId = metricTaskId(series)
+        if (series.metric_key !== PING_LATENCY_METRIC || !series.entity_id || !taskId) continue
+        const lossPoints = lossLookup.get(metricSeriesKey(series))
 
-      for (const point of series.points || []) {
-        const timestamp = metricPointTime(point)
-        if (timestamp === null || point.value === null || point.value === undefined) continue
-        const count = metricPointCount(point)
-        const loss = lossPoints?.get(timestamp)
-        const lossRatio = loss?.ratio ?? (Number(point.value) < 0 ? 1 : 0)
+        for (const point of series.points || []) {
+          const timestamp = metricPointTime(point)
+          if (timestamp === null || point.value === null || point.value === undefined) continue
+          const count = metricPointCount(point)
+          const loss = lossPoints?.get(timestamp)
+          const lossRatio = loss?.ratio ?? (Number(point.value) < 0 ? 1 : 0)
 
-        samples.push({
-          entityId: series.entity_id,
-          timestamp,
-          latency: latencyWithoutLoss(point.value, count, loss),
-          lossRatio,
-          count: loss?.count ?? count,
-        })
+          samples.push({
+            entityId: series.entity_id,
+            timestamp,
+            latency: latencyWithoutLoss(point.value, count, loss),
+            lossRatio,
+            count: loss?.count ?? count,
+          })
+        }
       }
-    }
 
       writePingApiMode(pingApiStorage, "metrics")
       return summarizeHomeLatencySamples(samples)
