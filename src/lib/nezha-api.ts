@@ -13,7 +13,7 @@ import { DateTime } from "luxon"
 import { summarizeHomeLatencySamples } from "./home-latency"
 import type { HomeLatencySample, HomeLatencySummary } from "./home-latency"
 import { fetchLegacyPingData } from "./legacy-ping-api"
-import { shouldFallbackToLegacyPingApi } from "./ping-api-compat"
+import { readPingApiMode, shouldFallbackToLegacyPingApi, writePingApiMode } from "./ping-api-compat"
 import { orderMonitorsByPingTasks } from "./ping-task-order"
 import { getKomariNodes, uuidToNumber } from "./utils"
 
@@ -21,6 +21,14 @@ import { getKomariNodes, uuidToNumber } from "./utils"
 
 const PING_LATENCY_METRIC = "ping.latency_ms"
 const PING_LOSS_METRIC = "ping.loss"
+
+function browserSessionStorage(): Storage | null {
+  try {
+    return typeof window === "undefined" ? null : window.sessionStorage
+  } catch {
+    return null
+  }
+}
 
 interface KomariMetricPoint {
   time?: string
@@ -548,8 +556,10 @@ export const fetchHomeLatency = async (entityIds: string[]): Promise<Record<stri
   const uniqueEntityIds = [...new Set(entityIds.filter(Boolean))]
   if (uniqueEntityIds.length === 0) return {}
 
-  try {
-    const metricData = await fetchPingMetricSeries({ entity_ids: uniqueEntityIds, hours: 1 }, 20)
+  const pingApiStorage = browserSessionStorage()
+  if (readPingApiMode(pingApiStorage) !== "legacy") {
+    try {
+      const metricData = await fetchPingMetricSeries({ entity_ids: uniqueEntityIds, hours: 1 }, 20)
     const lossLookup = buildPingLossLookup(metricData.series)
     const samples: HomeLatencySample[] = []
 
@@ -575,9 +585,12 @@ export const fetchHomeLatency = async (entityIds: string[]): Promise<Record<stri
       }
     }
 
-    return summarizeHomeLatencySamples(samples)
-  } catch (error) {
-    if (!shouldFallbackToLegacyPingApi(error)) throw error
+      writePingApiMode(pingApiStorage, "metrics")
+      return summarizeHomeLatencySamples(samples)
+    } catch (error) {
+      if (!shouldFallbackToLegacyPingApi(error)) throw error
+      writePingApiMode(pingApiStorage, "legacy")
+    }
   }
 
   const samples: HomeLatencySample[] = []
