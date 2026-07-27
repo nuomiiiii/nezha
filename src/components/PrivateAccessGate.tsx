@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { useSiteLogo } from "@/hooks/use-site-logo"
 
 export default function PrivateAccessGate({ siteName, siteDesc }: { siteName: string; siteDesc?: string }) {
-  const customLogo = ((window as unknown as Record<string, unknown>).CustomLogo as string) || "/favicon.ico"
+  const customLogo = useSiteLogo()
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">

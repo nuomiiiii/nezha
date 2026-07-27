@@ -2,6 +2,7 @@ import { ModeToggle } from "@/components/ThemeSwitcher"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useBackground } from "@/hooks/use-background"
+import { useSiteLogo } from "@/hooks/use-site-logo"
 import { useWebSocketContext } from "@/hooks/use-websocket-context"
 import { fetchSetting } from "@/lib/nezha-api"
 import { cn } from "@/lib/utils"
@@ -37,8 +38,7 @@ function Header() {
 
   const siteName = settingData?.data?.config?.site_name
 
-  // @ts-expect-error CustomLogo is a global variable
-  const customLogo = window.CustomLogo || "/favicon.ico"
+  const customLogo = useSiteLogo()
 
   const customDesc = settingData?.data?.config?.site_desc || (window as any).CustomDesc || "Komari Monitor"
 
