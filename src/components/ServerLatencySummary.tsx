@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils"
 import type { HomeLatencySummary } from "@/lib/home-latency"
+import { cn } from "@/lib/utils"
 import { useTranslation } from "react-i18next"
 
 const SEGMENT_COUNT = 12
@@ -9,7 +9,8 @@ function paddedHistory(values: Array<number | null> | undefined): Array<number |
   return [...new Array(Math.max(0, SEGMENT_COUNT - history.length)).fill(null), ...history]
 }
 
-function segmentColor(kind: "latency" | "loss", value: number | null): string {
+function segmentColor(kind: "latency" | "loss", value: number | null, lossValue: number | null = null): string {
+  if (kind === "latency" && value === null && lossValue !== null && lossValue > 0) return "bg-red-500"
   if (value === null || !Number.isFinite(value)) return "bg-stone-200 dark:bg-stone-700"
 
   if (kind === "latency") {
@@ -30,33 +31,27 @@ function MetricSummary({
   label,
   value,
   history,
-  loaded,
+  lossHistory,
 }: {
   kind: "latency" | "loss"
   label: string
   value: number | null
   history: Array<number | null> | undefined
-  loaded: boolean
+  lossHistory?: Array<number | null>
 }) {
   const formattedValue = value === null ? "--" : kind === "latency" ? `${Math.round(value)} ms` : `${value.toFixed(1)}%`
+  const displayedHistory = paddedHistory(history)
+  const displayedLossHistory = paddedHistory(lossHistory)
 
   return (
     <div className="min-w-0">
       <div className="flex items-center justify-between gap-2 text-[11px] leading-4">
         <span className="truncate text-muted-foreground">{label}</span>
-        <span className="flex min-w-[48px] shrink-0 justify-end font-medium tabular-nums text-foreground">
-          {loaded ? (
-            <span key={formattedValue} className="animate-in fade-in-0 duration-300 motion-reduce:animate-none">
-              {formattedValue}
-            </span>
-          ) : (
-            <span className="h-3 w-10 animate-pulse rounded-sm bg-stone-200 dark:bg-stone-700 motion-reduce:animate-none" />
-          )}
-        </span>
+        <span className="shrink-0 font-medium tabular-nums text-foreground">{formattedValue}</span>
       </div>
       <div className="mt-1 grid h-[3px] grid-cols-[repeat(12,minmax(0,1fr))] gap-[2px]" aria-hidden="true">
-        {paddedHistory(history).map((item, index) => (
-          <span key={index} className={cn("min-w-[2px] rounded-sm transition-colors duration-300 motion-reduce:transition-none", segmentColor(kind, item))} />
+        {displayedHistory.map((item, index) => (
+          <span key={index} className={cn("min-w-[2px] rounded-sm", segmentColor(kind, item, displayedLossHistory[index]))} />
         ))}
       </div>
     </div>
@@ -68,12 +63,16 @@ export default function ServerLatencySummary({ summary }: { summary?: HomeLatenc
 
   if (!summary) return null
 
-  const loaded = summary.updatedAt !== null
-
   return (
-    <section className="grid min-h-[23px] w-full grid-cols-2 gap-3" data-testid="server-latency-summary">
-      <MetricSummary kind="latency" label={t("monitor.avgDelay")} value={summary.latency} history={summary.latencyHistory} loaded={loaded} />
-      <MetricSummary kind="loss" label={t("monitor.packetLoss")} value={summary.packetLoss} history={summary.packetLossHistory} loaded={loaded} />
+    <section className="grid w-full grid-cols-2 gap-3" data-testid="server-latency-summary">
+      <MetricSummary
+        kind="latency"
+        label={t("monitor.avgDelay")}
+        value={summary.latency}
+        history={summary.latencyHistory}
+        lossHistory={summary.packetLossHistory}
+      />
+      <MetricSummary kind="loss" label={t("monitor.packetLoss")} value={summary.packetLoss} history={summary.packetLossHistory} />
     </section>
   )
 }
