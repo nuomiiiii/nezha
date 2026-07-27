@@ -22,13 +22,14 @@ interface SummaryBucket {
 }
 
 const MINUTE_MS = 60_000
+const HOME_BUCKET_MS = 5 * MINUTE_MS
 
 function finiteOrNull(value: unknown): number | null {
   const number = Number(value)
   return Number.isFinite(number) ? number : null
 }
 
-export function summarizeHomeLatencySamples(samples: HomeLatencySample[], historyLimit = 20): Record<string, HomeLatencySummary> {
+export function summarizeHomeLatencySamples(samples: HomeLatencySample[], historyLimit = 12): Record<string, HomeLatencySummary> {
   const bucketsByEntity = new Map<string, Map<number, SummaryBucket>>()
 
   for (const sample of samples) {
@@ -36,7 +37,7 @@ export function summarizeHomeLatencySamples(samples: HomeLatencySample[], histor
     const count = finiteOrNull(sample.count)
     if (!sample.entityId || timestamp === null || count === null || count <= 0) continue
 
-    const bucketTime = Math.floor(timestamp / MINUTE_MS) * MINUTE_MS
+    const bucketTime = Math.floor(timestamp / HOME_BUCKET_MS) * HOME_BUCKET_MS
     const lossRatio = Math.min(1, Math.max(0, finiteOrNull(sample.lossRatio) ?? 0))
     const entityBuckets = bucketsByEntity.get(sample.entityId) || new Map<number, SummaryBucket>()
     const bucket = entityBuckets.get(bucketTime) || { latencySum: 0, latencyCount: 0, lostCount: 0, totalCount: 0 }
@@ -55,22 +56,33 @@ export function summarizeHomeLatencySamples(samples: HomeLatencySample[], histor
 
   const summaries: Record<string, HomeLatencySummary> = {}
   for (const [entityId, entityBuckets] of bucketsByEntity) {
-    const history = [...entityBuckets.entries()]
-      .sort(([left], [right]) => left - right)
-      .slice(-Math.max(1, historyLimit))
-      .map(([timestamp, bucket]) => ({
+    const latestTimestamp = Math.max(...entityBuckets.keys())
+    const windowSize = Math.max(1, Math.floor(historyLimit))
+    const history = Array.from({ length: windowSize }, (_, index) => {
+      const timestamp = latestTimestamp - (windowSize - index - 1) * HOME_BUCKET_MS
+      const bucket = entityBuckets.get(timestamp)
+      return {
         timestamp,
-        latency: bucket.latencyCount > 0 ? bucket.latencySum / bucket.latencyCount : null,
-        packetLoss: bucket.totalCount > 0 ? (bucket.lostCount / bucket.totalCount) * 100 : null,
-      }))
+        latency: bucket && bucket.latencyCount > 0 ? bucket.latencySum / bucket.latencyCount : null,
+        packetLoss: bucket && bucket.totalCount > 0 ? (bucket.lostCount / bucket.totalCount) * 100 : null,
+      }
+    })
     const latest = history.at(-1)
+    let windowLostCount = 0
+    let windowTotalCount = 0
+    for (const item of history) {
+      const bucket = entityBuckets.get(item.timestamp)
+      if (!bucket) continue
+      windowLostCount += bucket.lostCount
+      windowTotalCount += bucket.totalCount
+    }
 
     summaries[entityId] = {
       latency: latest?.latency ?? null,
-      packetLoss: latest?.packetLoss ?? null,
+      packetLoss: windowTotalCount > 0 ? (windowLostCount / windowTotalCount) * 100 : null,
       latencyHistory: history.map((item) => item.latency),
       packetLossHistory: history.map((item) => item.packetLoss),
-      updatedAt: latest?.timestamp ?? null,
+      updatedAt: latestTimestamp,
     }
   }
 
