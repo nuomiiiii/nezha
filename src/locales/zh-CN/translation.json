@@ -110,6 +110,8 @@
     "avgDelay": "延迟",
     "monitorCount": "个监控服务",
     "packetLoss": "丢包率",
+    "loadError": "延迟数据加载失败",
+    "retry": "重试",
     "clearSelections": "清除"
   },
   "pwa": {

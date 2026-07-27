@@ -7,6 +7,7 @@ import { fetchMonitor } from "@/lib/nezha-api"
 import { cn, formatTime } from "@/lib/utils"
 import { NezhaMonitor, NezhaWebsocketResponse, ServerMonitorChart } from "@/types/nezha-api"
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
+import { RefreshCw } from "lucide-react"
 import * as React from "react"
 import { useCallback, useMemo } from "react"
 import { useTranslation } from "react-i18next"
@@ -94,7 +95,13 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
   const { lastMessage } = useWebSocketContext()
   const [hours, setHours] = React.useState(1)
 
-  const { data: monitorData } = useQuery({
+  const {
+    data: monitorData,
+    isPending,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ["monitor", server_id, hours],
     queryFn: () => fetchMonitor(server_id, hours),
     placeholderData: keepPreviousData,
@@ -115,8 +122,13 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
   }, [lastMessage, server_id])
 
   const monitorRecords = monitorData?.data || []
-  const isLoading = !monitorData
-  const isEmpty = !!monitorData?.success && monitorRecords.length === 0
+  const isLoading = isPending
+  const hasInitialError = isError && !monitorData
+  const isEmpty = !isLoading && !hasInitialError && !!monitorData?.success && monitorRecords.length === 0
+
+  React.useEffect(() => {
+    if (hasInitialError) console.error("Failed to load ping monitor data:", error)
+  }, [error, hasInitialError])
   const transformedData = monitorRecords.length > 0 ? transformData(monitorRecords) : {}
 
   const formattedData = monitorRecords.length > 0 ? formatData(monitorRecords) : []
@@ -145,7 +157,9 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
       hours={hours}
       isLoading={isLoading}
       isEmpty={isEmpty}
+      hasError={hasInitialError}
       onHoursChange={setHours}
+      onRetry={() => void refetch()}
     />
   )
 }
@@ -159,7 +173,9 @@ export const NetworkChartClient = React.memo(function NetworkChart({
   hours,
   isLoading,
   isEmpty,
+  hasError,
   onHoursChange,
+  onRetry,
 }: {
   chartDataKey: string[]
   chartConfig: ChartConfig
@@ -169,10 +185,12 @@ export const NetworkChartClient = React.memo(function NetworkChart({
   hours: number
   isLoading: boolean
   isEmpty: boolean
+  hasError: boolean
   onHoursChange: (hours: number) => void
+  onRetry: () => void
 }) {
   const { t } = useTranslation()
-  const hasChartData = !isLoading && !isEmpty
+  const hasChartData = !isLoading && !isEmpty && !hasError
 
   const customBackgroundImage = (window.CustomBackgroundImage as string) !== "" ? window.CustomBackgroundImage : undefined
 
@@ -420,7 +438,7 @@ export const NetworkChartClient = React.memo(function NetworkChart({
   return (
     <Card
       aria-busy={isLoading}
-      data-state={isLoading ? "loading" : isEmpty ? "empty" : "ready"}
+      data-state={isLoading ? "loading" : hasError ? "error" : isEmpty ? "empty" : "ready"}
       data-testid="network-chart-card"
       className={cn({
         "bg-card/70": customBackgroundImage,
@@ -430,7 +448,7 @@ export const NetworkChartClient = React.memo(function NetworkChart({
         <div className="flex min-h-[104px] flex-none flex-col justify-center gap-1 border-b px-6 py-4 sm:min-w-[250px]">
           <CardTitle className="flex min-h-5 flex-none items-center gap-0.5 text-md">{serverName || "\u00a0"}</CardTitle>
           <CardDescription className="min-h-4 text-xs">
-            {isLoading ? "\u00a0" : `${chartDataKey.length} ${t("monitor.monitorCount")}`}
+            {isLoading || hasError ? "\u00a0" : `${chartDataKey.length} ${t("monitor.monitorCount")}`}
           </CardDescription>
           <div className="flex items-center mt-0.5 space-x-3">
             <Select value={String(hours)} onValueChange={(v) => onHoursChange(Number(v))}>
@@ -453,11 +471,11 @@ export const NetworkChartClient = React.memo(function NetworkChart({
             </div>
           </div>
         </div>
-        <div className="flex min-h-[104px] w-full flex-wrap">{isLoading || isEmpty ? null : chartButtons}</div>
+        <div className="flex min-h-[104px] w-full flex-wrap">{isLoading || hasError || isEmpty ? null : chartButtons}</div>
       </CardHeader>
       <CardContent className="pr-2 pl-0 py-4 sm:pt-6 sm:pb-6 sm:pr-6 sm:pl-2">
         <div className="relative h-[250px]">
-          {!isLoading && !isEmpty && activeCharts.length > 0 && (
+          {hasChartData && activeCharts.length > 0 && (
             <button
               className="absolute -top-2 right-1 z-10 text-xs px-2 py-1 bg-stone-100/80 dark:bg-stone-800/80 backdrop-blur-sm rounded-[5px] text-muted-foreground hover:text-foreground transition-colors"
               onClick={clearAllSelections}
@@ -565,6 +583,18 @@ export const NetworkChartClient = React.memo(function NetworkChart({
               {isLoading ? (
                 <div className="text-muted-foreground" aria-label={t("common.loading", "Loading")}>
                   <LoadingSpinner />
+                </div>
+              ) : hasError ? (
+                <div className="flex flex-col items-center gap-3 px-4 text-center">
+                  <p className="text-sm font-medium text-muted-foreground">{t("monitor.loadError", "Failed to load latency data")}</p>
+                  <button
+                    type="button"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-[5px] border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                    onClick={onRetry}
+                  >
+                    <RefreshCw className="size-3.5" />
+                    {t("monitor.retry", "Retry")}
+                  </button>
                 </div>
               ) : (
                 <p className="text-sm font-medium text-muted-foreground">{t("monitor.noData", "该服务器未配置延迟检测")}</p>

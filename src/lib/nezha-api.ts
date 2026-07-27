@@ -12,8 +12,10 @@ import { DateTime } from "luxon"
 
 import { summarizeHomeLatencySamples } from "./home-latency"
 import type { HomeLatencySample, HomeLatencySummary } from "./home-latency"
-import { getKomariNodes, uuidToNumber } from "./utils"
+import { fetchLegacyPingData } from "./legacy-ping-api"
+import { shouldFallbackToLegacyPingApi } from "./ping-api-compat"
 import { orderMonitorsByPingTasks } from "./ping-task-order"
+import { getKomariNodes, uuidToNumber } from "./utils"
 
 //let lastestRefreshTokenAt = 0
 
@@ -108,10 +110,6 @@ function latencyWithoutLoss(value: unknown, count: number, loss?: PingLossSample
   // ping.latency_ms stores -1 for lost probes, so remove that contribution.
   const latency = (average * count + lost) / valid
   return Number.isFinite(latency) && latency >= 0 ? latency : null
-}
-
-function isMetricApiUnavailable(error: unknown): boolean {
-  return error instanceof Error && /(?:RPC Error -32601|method not found)/i.test(error.message)
 }
 
 async function fetchPingMetricSeries(
@@ -398,16 +396,11 @@ export const fetchMonitor = async (server_id: number, hours: number = 24): Promi
     }
   } catch (error) {
     // Komari <= 1.2.5 does not expose the metric API.
-    if (!isMetricApiUnavailable(error)) throw error
+    if (!shouldFallbackToLegacyPingApi(error)) throw error
   }
 
   // maxCount: -1 获取全量数据，确保丢包记录不会被后端采样丢弃
-  const km_monitors: any = await SharedClient().call("common:getRecords", {
-    type: "ping",
-    uuid: uuid,
-    maxCount: -1,
-    hours,
-  })
+  const km_monitors = await fetchLegacyPingData(uuid, hours)
 
   // 将 km_monitors 转换为 NezhaMonitor[]
   const seriesByTask = new Map<number, NezhaMonitor>()
@@ -416,7 +409,7 @@ export const fetchMonitor = async (server_id: number, hours: number = 24): Promi
     for (const task of km_monitors.tasks) {
       seriesByTask.set(task.id, {
         monitor_id: task.id,
-        monitor_name: task.name,
+        monitor_name: task.name || `task_${task.id}`,
         server_id,
         server_name: serverName,
         created_at: [],
@@ -584,9 +577,30 @@ export const fetchHomeLatency = async (entityIds: string[]): Promise<Record<stri
 
     return summarizeHomeLatencySamples(samples)
   } catch (error) {
-    if (isMetricApiUnavailable(error)) return {}
-    throw error
+    if (!shouldFallbackToLegacyPingApi(error)) throw error
   }
+
+  const samples: HomeLatencySample[] = []
+  // Legacy Komari has no batch ping query. Keep requests sequential to avoid
+  // creating a burst on the low-resource servers that commonly run it.
+  for (const entityId of uniqueEntityIds) {
+    const legacyData = await fetchLegacyPingData(entityId, 1)
+    for (const record of legacyData.records) {
+      const timestamp = Date.parse(record.time)
+      const value = Number(record.value)
+      if (!Number.isFinite(timestamp) || !Number.isFinite(value)) continue
+
+      samples.push({
+        entityId: record.client || entityId,
+        timestamp,
+        latency: value >= 0 ? value : null,
+        lossRatio: value < 0 ? 1 : 0,
+        count: 1,
+      })
+    }
+  }
+
+  return summarizeHomeLatencySamples(samples)
 }
 export const fetchServerUptime = async (): Promise<ServiceResponse> => {
   const kmNodes: Record<string, any> = await getKomariNodes()
@@ -688,7 +702,7 @@ export const fetchService = async (): Promise<ServiceResponse> => {
     }
   } catch (error) {
     // Retain compatibility with Komari versions that predate public:queryMetrics.
-    if (!isMetricApiUnavailable(error)) throw error
+    if (!shouldFallbackToLegacyPingApi(error)) throw error
   }
 
   const allTasks: any[] = []

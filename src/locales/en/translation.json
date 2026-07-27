@@ -109,6 +109,8 @@
     "avgDelay": "Latency",
     "monitorCount": "Services",
     "packetLoss": "Packet Loss",
+    "loadError": "Failed to load latency data",
+    "retry": "Retry",
     "clearSelections": "Clear"
   },
   "pwa": {

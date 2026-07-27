@@ -112,6 +112,8 @@
     "avgDelay": "延遲",
     "monitorCount": "個監控",
     "packetLoss": "丟包率",
+    "loadError": "延遲資料載入失敗",
+    "retry": "重試",
     "clearSelections": "清除"
   },
   "billingInfo": {
