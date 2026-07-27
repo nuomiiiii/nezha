@@ -30,11 +30,13 @@ function MetricSummary({
   label,
   value,
   history,
+  loaded,
 }: {
   kind: "latency" | "loss"
   label: string
   value: number | null
   history: Array<number | null> | undefined
+  loaded: boolean
 }) {
   const formattedValue = value === null ? "--" : kind === "latency" ? `${Math.round(value)} ms` : `${value.toFixed(1)}%`
 
@@ -42,11 +44,19 @@ function MetricSummary({
     <div className="min-w-0">
       <div className="flex items-center justify-between gap-2 text-[11px] leading-4">
         <span className="truncate text-muted-foreground">{label}</span>
-        <span className="shrink-0 font-medium tabular-nums text-foreground">{formattedValue}</span>
+        <span className="flex min-w-[48px] shrink-0 justify-end font-medium tabular-nums text-foreground">
+          {loaded ? (
+            <span key={formattedValue} className="animate-in fade-in-0 duration-300 motion-reduce:animate-none">
+              {formattedValue}
+            </span>
+          ) : (
+            <span className="h-3 w-10 animate-pulse rounded-sm bg-stone-200 dark:bg-stone-700 motion-reduce:animate-none" />
+          )}
+        </span>
       </div>
       <div className="mt-1 grid h-[3px] grid-cols-[repeat(12,minmax(0,1fr))] gap-[2px]" aria-hidden="true">
         {paddedHistory(history).map((item, index) => (
-          <span key={index} className={cn("min-w-[2px] rounded-sm", segmentColor(kind, item))} />
+          <span key={index} className={cn("min-w-[2px] rounded-sm transition-colors duration-300 motion-reduce:transition-none", segmentColor(kind, item))} />
         ))}
       </div>
     </div>
@@ -58,10 +68,12 @@ export default function ServerLatencySummary({ summary }: { summary?: HomeLatenc
 
   if (!summary) return null
 
+  const loaded = summary.updatedAt !== null
+
   return (
-    <section className="grid w-full grid-cols-2 gap-3" data-testid="server-latency-summary">
-      <MetricSummary kind="latency" label={t("monitor.avgDelay")} value={summary.latency} history={summary.latencyHistory} />
-      <MetricSummary kind="loss" label={t("monitor.packetLoss")} value={summary.packetLoss} history={summary.packetLossHistory} />
+    <section className="grid min-h-[23px] w-full grid-cols-2 gap-3" data-testid="server-latency-summary">
+      <MetricSummary kind="latency" label={t("monitor.avgDelay")} value={summary.latency} history={summary.latencyHistory} loaded={loaded} />
+      <MetricSummary kind="loss" label={t("monitor.packetLoss")} value={summary.packetLoss} history={summary.packetLossHistory} loaded={loaded} />
     </section>
   )
 }
