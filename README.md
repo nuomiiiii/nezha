@@ -1,76 +1,130 @@
 # Nezha
 
-基于 [BITJEBE/nezha-BITJEBE](https://github.com/BITJEBE/nezha-BITJEBE) 二次开发的 [Komari Monitor](https://github.com/komari-monitor/komari) 自定义主题。
+[![Release](https://img.shields.io/github/v/release/nuomiiiii/nezha?label=release)](https://github.com/nuomiiiii/nezha/releases)
+[![Komari Theme](https://img.shields.io/badge/Komari-Theme-6366F1)](https://github.com/komari-monitor/theme-market)
+[![License](https://img.shields.io/github/license/nuomiiiii/nezha)](LICENSE)
+
+基于 [BITJEBE/nezha-BITJEBE](https://github.com/BITJEBE/nezha-BITJEBE) 二次开发的 [Komari Monitor](https://github.com/komari-monitor/komari) 自定义主题。当前版本为 `3.0.2`，已进入 Komari 官方主题商城。
+
+![Nezha 主题预览](preview.png)
+
+## 最近更新
+
+### 3.0.2
+
+- 修复 Komari `1.1.8`、`1.2.5-fix2` 等旧版本中首页延迟持续显示“加载中”的问题。
+- 新版优先读取 `public:queryMetrics` V4 指标接口；接口不存在或旧版公共 RPC 被拒绝时，自动回退到 `/api/records/ping`。
+- 请求真正失败时退出加载状态，显示明确错误和重试入口，不再无限等待。
+- 保持 Komari `1.2.7`、`1.3.0` 与本分支 `2.1.x` 的新版指标接口行为不变。
+
+### 3.0.1
+
+- 修复主题包在 Linux Komari 中解压后找不到 `dist/index.html`、安装后回退到默认主题的问题。
+- 发布包统一使用 Linux 兼容路径，并校验根目录 manifest、预览图和构建入口。
+
+### 3.0.0
+
+- 新增默认概览卡片，在同一卡片内整合运行状态、资源、实时速率、账单、标签、流量和延迟信息。
+- 首页新增最近一小时延迟、丢包率和趋势展示，并提供独立开关。
+- 保留固定左侧名称、固定顶部名称两种原有布局；剩余天数时间条、概览手掌、动画插图和上下行流量均可单独控制。
+- 网络详情页默认进入 `1H` 视图，减少首次查看时的等待。
+
+完整记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 功能特性
 
 ### 首页概览与延迟监测
-- 首页服务器卡片默认采用全新的概览布局，集中展示运行状态、资源占用、实时速率、延迟、丢包率与流量信息
-- 原有“固定左侧服务器名称”和“固定顶部服务器名称”布局继续保留，可在主题管理中切换
-- 首页延迟监测默认开启，汇总最近一小时的延迟、丢包率与趋势；关闭后同时停止相关数据查询
-- 网络详情页默认进入 `1H` 视图，减少首次查看时的等待
 
-### 流量进度条
-- 服务器卡片内置流量使用进度条（无需外部脚本）
-- 支持所有流量计算模式：`sum`（双向）、`max`、`min`、`up`、`down`
-- 基于使用百分比的 HSL 渐变色（绿 -> 黄 -> 红）
-- 轮播显示：使用百分比、距离下次流量重置的天数、计费类型
-- 通过服务器 ID 精确匹配（避免重名导致的匹配问题）
+- 默认概览卡片集中展示运行状态、CPU、内存、磁盘、实时速率、上下行总量、账单、标签和到期时间
+- 首页延迟监测默认开启，显示最近一小时的延迟、丢包率与趋势
+- 多个延迟任务按照 Komari 后台的任务顺序展示
+- 无数据时显示稳定空状态；接口失败时提供错误信息和重试入口
+- 到期不足 14 天时，剩余时间使用红色提醒
+- 支持默认、固定左侧服务器名称和固定顶部服务器名称三种卡片布局
 
-### 增强标签系统
-- 支持以 `;` 分隔多个标签（匹配 Komari 后端格式）
-- 颜色标签：在标签后追加 `<颜色>` 指定颜色，例如 `So-net<red>;CDN<blue>`
-- 支持所有 [Radix UI 颜色](https://www.radix-ui.com/themes/docs/theme/color)：Gray、Gold、Red、Blue、Green、Purple、Teal、Sky 等
-- 自动分配颜色：未指定颜色的标签会根据文本哈希自动分配视觉上区分度高的颜色
+### 旧版与新版 Komari 兼容
+
+| Komari 环境 | 延迟数据方式 |
+| --- | --- |
+| `1.1.8`、`1.2.5-fix2` 等未提供新版指标接口的版本 | 自动回退到访客可用的 `/api/records/ping` |
+| 提供 `public:queryMetrics` 的版本，包括 `1.2.7`、`1.3.0` 和 `2.1.x` | 使用支持 raw/rollup 的 V4 指标查询 |
+
+回退只在“方法不存在”或旧版公共 RPC 拒绝场景触发。真实的存储、网络或权限错误仍会明确显示，不会被误判成旧版兼容问题。
+
+### 流量与账单
+
+- 卡片内置流量使用进度条，无需注入外部脚本
+- 支持 `sum`、`max`、`min`、`up`、`down` 五种流量计算模式
+- 支持百分比、距离下次重置的天数和计费模式轮播
+- 支持显示或隐藏上下行总流量、流量标签、IPv4/IPv6 标签和剩余天数时间条
+- 支持 CNY、JPY、USD、EUR、HKD、TWD、KRW、SGD、CAD、AUD 等币种，并允许按服务器覆盖
+- 资产卡片可汇总服务器账单、剩余价值和币种换算
+
+### 标签与外观
+
+- 标签使用 `;` 分隔，例如 `So-net<red>;CDN<blue>`
+- 支持 Radix UI 色名；未指定颜色时根据标签文本稳定分配颜色
+- 支持自定义桌面/移动背景、Logo、插图、导航链接和分组顺序
+- 支持亮色、暗色和跟随系统模式
+- SVG 国旗、概览手掌、动画插图均可在主题管理中控制
 
 ### 服务监控
-- 30 天服务可用性监控，按日统计在线/离线/延迟
-- Komari 1.2.6+ 使用支持 raw/rollup 的 `public:queryMetrics`；旧版后端自动回退到 `common:getRecords`
-- 平均延迟计算自动排除无数据的天数
 
-### 其他改进
-- 服务器详情页移除了 GPU 部分（Komari 后端不支持 GPU 数据）
-- 页头站点描述从 Komari 后端设置中获取
-- 干净的代码库，无外部脚本依赖
+- 支持 30 天服务可用性视图，按日展示在线、离线和延迟
+- 新版使用 raw/rollup 指标；旧版自动使用公开延迟记录接口
+- 平均延迟自动排除无数据和丢包记录
 
-## 安装方法
+## 安装
 
-### 方法一：通过 Komari 管理面板上传
-1. 从 [Releases](https://github.com/nuomiiiii/nezha/releases) 下载最新的 zip 文件
-2. 进入 Komari 管理面板 -> 主题管理
-3. 点击上传并选择 zip 文件
+### Komari 官方主题商城
 
-### 方法二：从源码构建
+进入 Komari 后台的“市场/主题市场”，找到 `Nezha` 后直接安装。商城版本由官方自动同步最新 GitHub Release，更新可能需要等待商城维护者合并自动更新。
+
+### 上传主题包
+
+1. 从 [Releases](https://github.com/nuomiiiii/nezha/releases) 下载最新的 `nezha-v*.zip`。
+2. 进入 Komari 后台的“主题管理”。
+3. 上传 ZIP；已安装旧版时可直接覆盖更新。
+
+不要下载 GitHub 自动生成的 Source code ZIP，它不是可安装主题包。
+
+### 从源码构建
+
 ```bash
 git clone https://github.com/nuomiiiii/nezha.git
 cd nezha
 npm install
 npm run build
 ```
-构建产物位于 `dist/` 目录。将 `dist/` 与 `komari-theme.json` 一起打包为 zip 文件，上传至 Komari 即可。
 
-## 配置说明
+构建产物位于 `dist/`。手工打包时，`komari-theme.json`、manifest 指定的预览图和 `dist/` 必须位于 ZIP 根目录。
+
+## 主题设置
+
+### 延迟监测
+
+“显示首页延迟监测”默认开启。关闭后不仅隐藏卡片内容，也会停止首页对应的数据查询。使用前需要在 Komari 后台创建延迟监测任务并分配服务器。
 
 ### 流量限制
-在 Komari 后端按服务器设置：
-- `traffic_limit`：流量上限（字节）
-- `traffic_limit_type`：`sum` | `max` | `min` | `up` | `down`
 
-新版 Komari 可在节点编辑页配置流量重置日，并自动同步到 Agent；主题会直接读取服务器接口返回的重置日。以下方式仅用于兼容旧版 Komari：
+在 Komari 后台按服务器设置：
 
-- 在节点 `tags` 中添加 `<TRD:n>`，例如 `<TRD:1>`。
-- 或在主题设置的「流量重置日覆盖」中按 UUID、卡片 ID 或名称配置。
+- `traffic_limit`：流量上限，单位为字节
+- `traffic_limit_type`：`sum`、`max`、`min`、`up` 或 `down`
 
-`expired_at` 是套餐到期日期，用于资产剩余价值计算，不是流量重置日。
+新版 Komari 会直接提供流量重置日。旧版可以在节点标签中加入 `<TRD:n>`，例如 `<TRD:1>`，或在主题设置的“流量重置日覆盖”中按 UUID、卡片 ID 或名称配置。
 
-### 标签
-在 Komari 后端的标签字段中按服务器设置：
+`expired_at` 表示套餐到期日期，不是流量重置日。
+
+### 标签与货币元数据
+
+```text
+So-net<red>;1Gbps<green>;CN2 GIA<blue>;<JPY>
 ```
-So-net<red>;1Gbps<green>;CN2 GIA<blue>
-```
-- 多个标签以 `;` 分隔
-- 追加 `<颜色>` 指定颜色
-- 未指定颜色的标签自动分配颜色
+
+- 普通标签以 `;` 分隔
+- `<red>`、`<blue>` 等后缀控制标签颜色
+- `<CNY>`、`<JPY>`、`<USD>` 等独立元标签用于指定服务器币种，不会显示为普通标签
 
 ## 技术栈
 
@@ -80,19 +134,14 @@ So-net<red>;1Gbps<green>;CN2 GIA<blue>
 - TanStack React Query
 - Recharts
 - Framer Motion
-- i18next（中文 / 英文）
+- i18next
 
 ## 致谢
 
 - 上游主题：[BITJEBE/nezha-BITJEBE](https://github.com/BITJEBE/nezha-BITJEBE)，作者 [BITJEBE](https://github.com/BITJEBE)
-- 监控后端：[Komari Monitor](https://github.com/komari-monitor/komari)
-
-## 贡献者
-
-- [nuomiiiii](https://github.com/nuomiiiii) - 项目维护者
-- [BITJEBE](https://github.com/BITJEBE) - 上游项目作者
-- [Claude](https://claude.ai) - AI 辅助开发
+- 监控项目：[Komari Monitor](https://github.com/komari-monitor/komari)
+- 项目维护：[nuomiiiii](https://github.com/nuomiiiii)
 
 ## 许可证
 
-Apache License 2.0
+[Apache License 2.0](LICENSE)
