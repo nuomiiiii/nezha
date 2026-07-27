@@ -88,3 +88,74 @@ export function summarizeHomeLatencySamples(samples: HomeLatencySample[], histor
 
   return summaries
 }
+
+
+const HOME_LATENCY_CACHE_KEY = "nezha-home-latency-v1"
+const HOME_LATENCY_CACHE_MAX_AGE_MS = 5 * 60_000
+
+interface HomeLatencyCachePayload {
+  savedAt: number
+  data: Record<string, HomeLatencySummary>
+}
+
+type ReadableStorage = Pick<Storage, "getItem">
+type WritableStorage = Pick<Storage, "setItem">
+
+function isNullableNumber(value: unknown): value is number | null {
+  return value === null || (typeof value === "number" && Number.isFinite(value))
+}
+
+function isHistory(value: unknown): value is Array<number | null> {
+  return Array.isArray(value) && value.every(isNullableNumber)
+}
+
+function isHomeLatencySummary(value: unknown): value is HomeLatencySummary {
+  if (!value || typeof value !== "object") return false
+  const summary = value as Partial<HomeLatencySummary>
+  return (
+    isNullableNumber(summary.latency) &&
+    isNullableNumber(summary.packetLoss) &&
+    isHistory(summary.latencyHistory) &&
+    isHistory(summary.packetLossHistory) &&
+    isNullableNumber(summary.updatedAt)
+  )
+}
+
+export function readHomeLatencyCache(
+  storage: ReadableStorage | null,
+  entityIds: string[],
+  now = Date.now(),
+): Record<string, HomeLatencySummary> | undefined {
+  if (!storage || entityIds.length === 0) return undefined
+
+  try {
+    const parsed = JSON.parse(storage.getItem(HOME_LATENCY_CACHE_KEY) || "null") as Partial<HomeLatencyCachePayload> | null
+    if (!parsed || typeof parsed.savedAt !== "number" || !Number.isFinite(parsed.savedAt)) return undefined
+    if (parsed.savedAt > now + 60_000 || now - parsed.savedAt > HOME_LATENCY_CACHE_MAX_AGE_MS) return undefined
+    if (!parsed.data || typeof parsed.data !== "object") return undefined
+
+    const cached: Record<string, HomeLatencySummary> = {}
+    for (const entityId of entityIds) {
+      const summary = parsed.data[entityId]
+      if (isHomeLatencySummary(summary)) cached[entityId] = summary
+    }
+    return Object.keys(cached).length > 0 ? cached : undefined
+  } catch {
+    return undefined
+  }
+}
+
+export function writeHomeLatencyCache(
+  storage: WritableStorage | null,
+  data: Record<string, HomeLatencySummary>,
+  savedAt = Date.now(),
+): void {
+  if (!storage || Object.keys(data).length === 0) return
+
+  try {
+    const payload: HomeLatencyCachePayload = { savedAt, data }
+    storage.setItem(HOME_LATENCY_CACHE_KEY, JSON.stringify(payload))
+  } catch {
+    // Storage can be unavailable in privacy modes; live data still works normally.
+  }
+}
