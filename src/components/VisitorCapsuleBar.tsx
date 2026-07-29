@@ -111,7 +111,7 @@ export default function VisitorCapsuleBar() {
             className="size-full object-cover"
             src={`https://flagcdn.com/w80/${visitorInfo.code.toLowerCase()}.png`}
             alt={visitorInfo.code}
-            loading="lazy"
+            loading="eager"
           />
         ) : (
           <Globe2 className="size-4" />

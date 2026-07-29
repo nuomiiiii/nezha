@@ -40,7 +40,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                       position="top-center"
                       className={"flex items-center justify-center"}
                     />
-                    <ReactQueryDevtools />
+                    {import.meta.env.DEV && <ReactQueryDevtools />}
                   </TooltipProvider>
                 </SortProvider>
               </StatusProvider>

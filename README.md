@@ -4,11 +4,17 @@
 [![Komari Theme](https://img.shields.io/badge/Komari-Theme-6366F1)](https://github.com/komari-monitor/theme-market)
 [![License](https://img.shields.io/github/license/nuomiiiii/nezha)](LICENSE)
 
-基于 [BITJEBE/nezha-BITJEBE](https://github.com/BITJEBE/nezha-BITJEBE) 二次开发的 [Komari Monitor](https://github.com/komari-monitor/komari) 自定义主题。当前版本为 `3.0.5`，已进入 Komari 官方主题商城。
+基于 [BITJEBE/nezha-BITJEBE](https://github.com/BITJEBE/nezha-BITJEBE) 二次开发的 [Komari Monitor](https://github.com/komari-monitor/komari) 自定义主题。当前版本为 `3.0.6`，已进入 Komari 官方主题商城。
 
 ![Nezha 主题预览](preview.png)
 
 ## 最近更新
+
+### 3.0.6
+
+- 优化主题样式与生产资源构建，减少文件体积和首次加载请求。
+- 清理未使用代码与冗余依赖，修复重连未立即刷新、主题设置重复请求和自定义 CSS 链接注入问题。
+- 补齐移动端 Web App 声明并消除 Edge 图片加载提示，保留 Komari `1.1.8` 至 `2.1.x` 的延迟接口兼容。
 
 ### 3.0.5
 

@@ -28,36 +28,26 @@ function Header() {
   const { data: settingData, isLoading } = useQuery({
     queryKey: ["setting"],
     queryFn: () => fetchSetting(),
-    refetchOnMount: true,
+    refetchOnMount: false,
     refetchOnWindowFocus: true,
   })
-
-  //const { lastMessage, connected } = useWebSocketContext()
-
-  //const onlineCount = connected ? (lastMessage ? JSON.parse(lastMessage.data).online || 0 : 0) : "..."
 
   const siteName = settingData?.data?.config?.site_name
 
   const customLogo = useSiteLogo()
 
-  const customDesc = settingData?.data?.config?.site_desc || (window as any).CustomDesc || "Komari Monitor"
+  const windowCustomDesc = (window as unknown as { CustomDesc?: string }).CustomDesc
+  const customDesc = settingData?.data?.config?.site_desc || windowCustomDesc || "Komari Monitor"
 
   const customMobileBackgroundImage = window.CustomMobileBackgroundImage !== "" ? window.CustomMobileBackgroundImage : undefined
 
   useEffect(() => {
-    const link = document.querySelector("link[rel*='icon']") || document.createElement("link")
-    // @ts-expect-error set link.type
+    const link = (document.querySelector("link[rel*='icon']") as HTMLLinkElement | null) ?? document.createElement("link")
     link.type = "image/x-icon"
-    // @ts-expect-error set link.rel
     link.rel = "shortcut icon"
-    // @ts-expect-error set link.href
     link.href = customLogo
-    document.getElementsByTagName("head")[0].appendChild(link)
+    document.head.appendChild(link)
   }, [customLogo])
-
-  // useEffect(() => {
-  //   document.title = siteName || "哪吒监控 Nezha Monitoring"
-  // }, [siteName])
 
   const handleBackgroundToggle = () => {
     if (window.CustomBackgroundImage) {
@@ -101,7 +91,6 @@ function Header() {
         <section className="flex items-center gap-2 header-handles">
           <div className="hidden sm:flex items-center gap-2">
             <Links />
-            <DashboardLink />
           </div>
           <SearchButton />
           <LanguageSwitcher />
@@ -128,20 +117,12 @@ function Header() {
               })}
               title={t("login")}
             >
-              {/* {connected ? onlineCount : <Loader visible={true} />} */}
-              {/* <p className="text-muted-foreground">{connected ? t("online") : t("offline")}</p> */}
-              {/* <span
-              className={cn("h-2 w-2 rounded-full bg-green-500", {
-                "bg-red-500": !connected,
-              })}
-            ></span> */}
               <LogIn />
             </Button>
           </a>
         </section>
       </section>
       <div className="w-full flex justify-between sm:hidden mt-1">
-        <DashboardLink />
         <Links />
       </div>
       <Overview />
@@ -187,16 +168,17 @@ export function RefreshToast() {
 
   const { needReconnect } = useWebSocketContext()
 
-  if (!needReconnect) {
-    return null
-  }
-
-  if (needReconnect) {
+  useEffect(() => {
+    if (!needReconnect) return
     sessionStorage.removeItem("needRefresh")
-    setTimeout(() => {
+    const timer = window.setTimeout(() => {
       navigate(0)
     }, 1000)
-  }
+
+    return () => window.clearTimeout(timer)
+  }, [navigate, needReconnect])
+
+  if (!needReconnect) return null
 
   return (
     <AnimatePresence>
@@ -213,62 +195,6 @@ export function RefreshToast() {
         </section>
       </m.div>
     </AnimatePresence>
-  )
-}
-
-function DashboardLink() {
-  // 登录交给Komari后台处理
-  // const { t } = useTranslation()
-  // const { setNeedReconnect } = useWebSocketContext()
-  // const previousLoginState = useRef<boolean | null>(null)
-  // const {
-  //   data: userData,
-  //   isFetched,
-  //   isLoadingError,
-  //   isError,
-  //   refetch,
-  // } = useQuery({
-  //   queryKey: ["login-user"],
-  //   queryFn: () => fetchLoginUser(),
-  //   refetchOnMount: false,
-  //   refetchOnWindowFocus: true,
-  //   refetchIntervalInBackground: true,
-  //   refetchInterval: 1000 * 30,
-  //   retry: 0,
-  // })
-
-  // const isLogin = isError ? false : userData ? !!userData?.data?.id && !!document.cookie : false
-
-  // if (isLoadingError) {
-  //   previousLoginState.current = isLogin
-  // }
-
-  // useEffect(() => {
-  //   refetch()
-  // }, [document.cookie])
-
-  // useEffect(() => {
-  //   if (isFetched || isError) {
-  //     // 只有当登录状态发生变化时才设置needReconnect
-  //     if (previousLoginState.current !== null && previousLoginState.current !== isLogin) {
-  //       setNeedReconnect(true)
-  //     }
-  //     previousLoginState.current = isLogin
-  //   }
-  // }, [isLogin])
-
-  return (
-    <></>
-    // <div className="flex items-center gap-2">
-    //   <a
-    //     href={"/dashboard"}
-    //     rel="noopener noreferrer"
-    //     className="flex items-center text-nowrap gap-1 text-sm font-medium opacity-50 transition-opacity hover:opacity-100"
-    //   >
-    //     {!isLogin && t("login")}
-    //     {isLogin && t("dashboard")}
-    //   </a>
-    // </div>
   )
 }
 

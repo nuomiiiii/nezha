@@ -18,11 +18,6 @@ import NotFound from "./pages/NotFound"
 import Server from "./pages/Server"
 import ServerDetail from "./pages/ServerDetail"
 
-// Route checker component
-const RouteChecker: React.FC = () => {
-  return <MainApp />
-}
-
 const MainApp: React.FC = () => {
   const { data: settingData, error } = useQuery({
     queryKey: ["setting"],
@@ -34,6 +29,7 @@ const MainApp: React.FC = () => {
   const { setTheme } = useTheme()
   const [isCustomCodeInjected, setIsCustomCodeInjected] = useState(false)
   const { backgroundImage: customBackgroundImage } = useBackground()
+  const configuredLanguage = settingData?.data?.config?.language
 
   useEffect(() => {
     if (settingData?.data?.config?.custom_code) {
@@ -51,7 +47,13 @@ const MainApp: React.FC = () => {
     if (forceTheme === "dark" || forceTheme === "light") {
       setTheme(forceTheme)
     }
-  }, [forceTheme])
+  }, [forceTheme, setTheme])
+
+  useEffect(() => {
+    if (configuredLanguage && !localStorage.getItem("language")) {
+      void i18n.changeLanguage(configuredLanguage)
+    }
+  }, [configuredLanguage, i18n])
 
   if (error) {
     return <ErrorPage code={500} message={error.message} />
@@ -63,10 +65,6 @@ const MainApp: React.FC = () => {
 
   if (settingData?.data?.config?.custom_code && !isCustomCodeInjected) {
     return null
-  }
-
-  if (settingData?.data?.config?.language && !localStorage.getItem("language")) {
-    i18n.changeLanguage(settingData?.data?.config?.language)
   }
 
   if (settingData.data.private_site) {
@@ -114,11 +112,10 @@ const MainApp: React.FC = () => {
   )
 }
 
-// Main App wrapper with router
 const App: React.FC = () => {
   return (
     <Router basename={import.meta.env.BASE_URL}>
-      <RouteChecker />
+      <MainApp />
     </Router>
   )
 }

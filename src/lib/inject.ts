@@ -1,4 +1,4 @@
-export const InjectContext = (content: string) => {
+export const InjectContext = (content: string): Promise<void> => {
   const tempDiv = document.createElement("div")
   tempDiv.innerHTML = content
 
@@ -31,13 +31,12 @@ export const InjectContext = (content: string) => {
     })
   }
 
-  const loadStyle = (styleElement: HTMLStyleElement): Promise<void> => {
+  const loadStyle = (styleElement: HTMLStyleElement | HTMLLinkElement): Promise<void> => {
     return new Promise((resolve, reject) => {
-      if ((styleElement as any).href) {
-        // 处理 <link>
+      if (styleElement instanceof HTMLLinkElement) {
         const link = document.createElement("link")
         link.rel = "stylesheet"
-        link.href = (styleElement as any).href
+        link.href = styleElement.href
         link.setAttribute(INJECTION_MARK, "true") // 添加标识
         link.onload = () => resolve()
         link.onerror = () => reject(new Error(`Failed to load stylesheet: ${link.href}`))
@@ -64,6 +63,7 @@ export const InjectContext = (content: string) => {
       }
     },
     STYLE: (element) => loadStyle(element as HTMLStyleElement),
+    LINK: (element) => loadStyle(element as HTMLLinkElement),
     META: (element) => {
       const meta = element.cloneNode(true) as HTMLElement
       meta.setAttribute(INJECTION_MARK, "true") // 添加标识
@@ -90,7 +90,6 @@ export const InjectContext = (content: string) => {
         document.body.appendChild(document.createTextNode(node.textContent || ""))
       }
     }
-    console.log("All resources have been injected and executed in sequence.")
   }
 
   return executeSequentially().catch((error) => {

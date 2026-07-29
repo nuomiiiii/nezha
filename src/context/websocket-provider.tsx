@@ -1,6 +1,6 @@
 import { SharedClient } from "@/hooks/use-rpc2"
 import { getKomariNodes, komariToNezhaWebsocketResponse } from "@/lib/utils"
-import React, { useEffect, useRef, useState } from "react"
+import React, { useCallback, useEffect, useRef, useState } from "react"
 
 import { WebSocketContext, WebSocketContextType } from "./websocket-context"
 
@@ -9,159 +9,51 @@ interface WebSocketProviderProps {
   children: React.ReactNode
 }
 
-export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ url, children }) => {
+export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }) => {
   const [lastMessage, setLastMessage] = useState<{ data: string } | null>(null)
-  const [messageHistory, setMessageHistory] = useState<{ data: string }[]>([]) // 新增历史消息状态
+  const [messageHistory, setMessageHistory] = useState<{ data: string }[]>([])
   const [connected, setConnected] = useState(false)
   const [needReconnect, setNeedReconnect] = useState(false)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const activeRef = useRef(false)
+  const requestRunningRef = useRef(false)
+
+  const updateData = useCallback(async () => {
+    if (requestRunningRef.current) return
+    requestRunningRef.current = true
+
+    try {
+      const rpc2 = SharedClient()
+      const [nodes, status] = await Promise.all([getKomariNodes(), rpc2.call("common:getNodesLatestStatus")])
+      if (!activeRef.current) return
+
+      const message = { data: JSON.stringify(komariToNezhaWebsocketResponse(status, nodes)) }
+      setLastMessage(message)
+      setMessageHistory((previous) => [message, ...previous].slice(0, 30))
+      setConnected(true)
+    } catch (error) {
+      console.warn("加载服务器状态失败，等待下一轮：", error instanceof Error ? error.message : error)
+    } finally {
+      requestRunningRef.current = false
+    }
+  }, [])
 
   useEffect(() => {
-    let active = true
-    let requestRunning = false
-
-    const updateData = async () => {
-      if (requestRunning) return
-      requestRunning = true
-
-      try {
-        const rpc2 = SharedClient()
-        const [nodes, status] = await Promise.all([getKomariNodes(), rpc2.call("common:getNodesLatestStatus")])
-        if (!active) return
-
-        const message = { data: JSON.stringify(komariToNezhaWebsocketResponse(status, nodes)) }
-        setLastMessage(message)
-        setMessageHistory((prev) => [message, ...prev].slice(0, 30))
-        setConnected(true)
-      } catch (err) {
-        // 单次失败不影响后续轮询。
-        console.warn("加载服务器状态失败,等待下一轮:", err instanceof Error ? err.message : err)
-      } finally {
-        requestRunning = false
-      }
-    }
-
+    activeRef.current = true
     void updateData()
 
-    intervalRef.current = setInterval(() => {
+    const intervalId = window.setInterval(() => {
       void updateData()
     }, 2000)
 
     return () => {
-      active = false
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
+      activeRef.current = false
+      window.clearInterval(intervalId)
     }
-  }, [])
+  }, [updateData])
 
-  const cleanup = () => {
-    return
-    // 使用RPC2自动管理
-    // if (ws.current) {
-    //   // 移除所有事件监听器
-    //   ws.current.onopen = null
-    //   ws.current.onclose = null
-    //   ws.current.onmessage = null
-    //   ws.current.onerror = null
-
-    //   if (ws.current.readyState === WebSocket.OPEN || ws.current.readyState === WebSocket.CONNECTING) {
-    //     ws.current.close()
-    //   }
-    //   ws.current = null
-    // }
-    // if (reconnectTimeout.current) {
-    //   clearTimeout(reconnectTimeout.current)
-    //   reconnectTimeout.current = null
-    // }
-    // setConnected(false)
-  }
-
-  const connect = () => {
-    return
-    // 使用RPC2自动管理
-    // if (isConnecting.current) {
-    //   console.log("Connection already in progress")
-    //   return
-    // }
-
-    // cleanup()
-    // isConnecting.current = true
-
-    // try {
-    //   const wsUrl = new URL(url, window.location.origin)
-    //   wsUrl.protocol = wsUrl.protocol.replace("http", "ws")
-
-    //   ws.current = new WebSocket(wsUrl.toString())
-
-    //   ws.current.onopen = () => {
-    //     console.log("WebSocket connected")
-    //     setConnected(true)
-    //     reconnectAttempts.current = 0
-    //     isConnecting.current = false
-    //   }
-
-    //   ws.current.onclose = () => {
-    //     console.log("WebSocket disconnected")
-    //     setConnected(false)
-    //     ws.current = null
-    //     isConnecting.current = false
-
-    //     if (reconnectAttempts.current < maxReconnectAttempts) {
-    //       reconnectTimeout.current = setTimeout(() => {
-    //         reconnectAttempts.current++
-    //         connect()
-    //       }, 3000)
-    //     }
-    //   }
-
-    //   ws.current.onmessage = (event) => {
-    //     const newMessage = { data: event.data }
-    //     setLastMessage(newMessage)
-    //     // 更新历史消息，保持最新的30条记录
-    //     setMessageHistory((prev) => {
-    //       const updated = [newMessage, ...prev]
-    //       return updated.slice(0, 30)
-    //     })
-    //   }
-
-    //   ws.current.onerror = (error) => {
-    //     console.error("WebSocket error:", error)
-    //     isConnecting.current = false
-    //   }
-    // } catch (error) {
-    //   console.error("WebSocket connection error:", error)
-    //   isConnecting.current = false
-    // }
-  }
-
-  const reconnect = () => {
-    return
-    // 使用RPC2自动管理
-    // reconnectAttempts.current = 0
-    // // 等待一个小延时确保清理完成
-    // cleanup()
-    // setTimeout(() => {
-    //   connect()
-    // }, 1000)
-  }
-
-  useEffect(() => {
-    connect()
-
-    // 添加页面卸载事件监听
-    const handleBeforeUnload = () => {
-      cleanup()
-    }
-
-    window.addEventListener("beforeunload", handleBeforeUnload)
-
-    return () => {
-      cleanup()
-      window.removeEventListener("beforeunload", handleBeforeUnload)
-    }
-  }, [url])
+  const reconnect = useCallback(() => {
+    void updateData()
+  }, [updateData])
 
   const contextValue: WebSocketContextType = {
     lastMessage,

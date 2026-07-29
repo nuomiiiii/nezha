@@ -1,12 +1,11 @@
 import react from "@vitejs/plugin-react-swc"
-import { execSync } from "child_process"
-import path from "path"
+import { execSync } from "node:child_process"
+import * as fs from "node:fs"
+import path from "node:path"
+import { fileURLToPath } from "node:url"
 import { UserConfig, defineConfig } from "vite"
-import dotenv from "dotenv";
-import * as fs from "fs";
+import dotenv from "dotenv"
 
-
-// Get git commit hash
 const getGitHash = () => {
   try {
     return execSync("git rev-parse --short HEAD").toString().trim()
@@ -15,6 +14,8 @@ const getGitHash = () => {
     return "unknown"
   }
 }
+
+const projectRoot = fileURLToPath(new URL(".", import.meta.url))
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -26,7 +27,7 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     resolve: {
       alias: {
-        "@": path.resolve(__dirname, "./src"),
+        "@": path.resolve(projectRoot, "src"),
       },
     },
 
@@ -37,9 +38,10 @@ export default defineConfig(({ mode }) => {
           chunkFileNames: `assets/[name].[hash].js`,
           assetFileNames: `assets/[name].[hash].[ext]`,
           manualChunks(id) {
-            if (id.includes("node_modules")) {
-              return id.toString().split("node_modules/")[1].split("/")[0].toString()
-            }
+            if (!id.includes("node_modules")) return
+
+            if (/[/\\](recharts|recharts-scale|victory-vendor|d3-[^/\\]+|decimal\.js-light|lodash)[/\\]/.test(id)) return "chart-vendor"
+            return "vendor"
           },
         },
       },
@@ -49,15 +51,15 @@ export default defineConfig(({ mode }) => {
 
 
   if (mode === "development") {
-    const envPath = path.resolve(process.cwd(), ".env.development");
+    const envPath = path.resolve(process.cwd(), ".env.development")
     if (fs.existsSync(envPath)) {
-      const envConfig = dotenv.parse(fs.readFileSync(envPath));
+      const envConfig = dotenv.parse(fs.readFileSync(envPath))
       for (const k in envConfig) {
-        process.env[k] = envConfig[k];
+        process.env[k] = envConfig[k]
       }
     }
     if (!process.env.VITE_API_TARGET) {
-      process.env.VITE_API_TARGET = "http://127.0.0.1:8008";
+      process.env.VITE_API_TARGET = "http://127.0.0.1:8008"
     }
     baseConfig.server = {
       proxy: {
