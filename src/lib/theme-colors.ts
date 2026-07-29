@@ -3,7 +3,7 @@
 // Tailwind JIT 通过扫描源码字面量来识别 class,所以这里必须把完整 class 字符串
 // 一一写出来,不能用模板字符串拼接(如 `bg-${color}-50` 会被摇树掉)。
 //
-// 添加新色时:在两个对象里都加一组,同时保持 tailwind.config.js 的 safelist 同步。
+// 添加新色时:在两个对象里都加一组,并继续使用完整的 class 字面量。
 
 export type ThemeColorKey = "blue" | "green" | "purple" | "pink" | "orange" | "red" | "cyan" | "amber"
 

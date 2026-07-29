@@ -37,12 +37,6 @@ export default defineConfig(({ mode }) => {
           entryFileNames: `assets/[name].[hash].js`,
           chunkFileNames: `assets/[name].[hash].js`,
           assetFileNames: `assets/[name].[hash].[ext]`,
-          manualChunks(id) {
-            if (!id.includes("node_modules")) return
-
-            if (/[/\\](recharts|recharts-scale|victory-vendor|d3-[^/\\]+|decimal\.js-light|lodash)[/\\]/.test(id)) return "chart-vendor"
-            return "vendor"
-          },
         },
       },
       chunkSizeWarningLimit: 1500,
