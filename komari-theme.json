@@ -2,7 +2,7 @@
     "name": "Nezha",
     "short": "nezha",
     "description": "Nezha Theme for Komari Monitor",
-    "version": "3.0.7",
+    "version": "3.0.8",
     "author": "Nomi",
     "url": "https://github.com/nuomiiiii/nezha",
     "upstream": "https://github.com/BITJEBE/nezha-BITJEBE",
@@ -32,8 +32,8 @@
                 "key": "CustomLogo",
                 "name": "站点Logo",
                 "type": "input",
-                "default": "/apple-touch-icon.png",
-                "help": "站点Logo图片URL，显示在左上角；浏览器标签页使用 Komari 后台设置的站点图标。加载失败时使用主题内置 Komari Logo。"
+                "default": "/favicon.ico",
+                "help": "站点Logo图片URL，留空时左上角跟随 Komari 后台设置的站点图标；填写其他图片地址可单独设置。加载失败时回退到 Komari 站点图标。"
             },
             {
                 "key": "CustomIllustration",

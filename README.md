@@ -4,11 +4,16 @@
 [![Komari Theme](https://img.shields.io/badge/Komari-Theme-6366F1)](https://github.com/komari-monitor/theme-market)
 [![License](https://img.shields.io/github/license/nuomiiiii/nezha)](LICENSE)
 
-基于 [BITJEBE/nezha-BITJEBE](https://github.com/BITJEBE/nezha-BITJEBE) 二次开发的 [Komari Monitor](https://github.com/komari-monitor/komari) 自定义主题。当前版本为 `3.0.7`，已进入 Komari 官方主题商城。
+基于 [BITJEBE/nezha-BITJEBE](https://github.com/BITJEBE/nezha-BITJEBE) 二次开发的 [Komari Monitor](https://github.com/komari-monitor/komari) 自定义主题。当前版本为 `3.0.8`，已进入 Komari 官方主题商城。
 
 ![Nezha 主题预览](preview.png)
 
 ## 最近更新
+
+### 3.0.8
+
+- 左上角站点 Logo 默认跟随 Komari 后台设置的 favicon，与浏览器标签页保持一致。
+- 已保存旧默认值 `/apple-touch-icon.png` 的用户会自动切换，无需手动重置主题设置；自定义 Logo 地址继续保留。
 
 ### 3.0.7
 

@@ -71,7 +71,7 @@ function Header() {
             <img
               width={40}
               height={40}
-              alt="apple-touch-icon"
+              alt="site logo"
               src={customLogo}
               className="relative m-0! border-2 border-transparent h-6 w-6 object-cover object-top p-0!"
             />

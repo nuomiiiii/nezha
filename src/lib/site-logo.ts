@@ -1,4 +1,5 @@
-export const DEFAULT_SITE_LOGO = "/apple-touch-icon.png"
+export const DEFAULT_SITE_LOGO = "/favicon.ico"
+const LEGACY_DEFAULT_SITE_LOGO = "/apple-touch-icon.png"
 
 interface PreloadableImage {
   onload: ((...args: never[]) => unknown) | null
@@ -9,7 +10,7 @@ interface PreloadableImage {
 export function normalizeSiteLogo(value: unknown): string {
   if (typeof value !== "string") return DEFAULT_SITE_LOGO
   const trimmed = value.trim()
-  return trimmed || DEFAULT_SITE_LOGO
+  return !trimmed || trimmed === LEGACY_DEFAULT_SITE_LOGO ? DEFAULT_SITE_LOGO : trimmed
 }
 
 export function preloadSiteLogo(
