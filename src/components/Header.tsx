@@ -41,14 +41,6 @@ function Header() {
 
   const customMobileBackgroundImage = window.CustomMobileBackgroundImage !== "" ? window.CustomMobileBackgroundImage : undefined
 
-  useEffect(() => {
-    const link = (document.querySelector("link[rel*='icon']") as HTMLLinkElement | null) ?? document.createElement("link")
-    link.type = "image/x-icon"
-    link.rel = "shortcut icon"
-    link.href = customLogo
-    document.head.appendChild(link)
-  }, [customLogo])
-
   const handleBackgroundToggle = () => {
     if (window.CustomBackgroundImage) {
       // Store the current background image before removing it

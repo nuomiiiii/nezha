@@ -33,7 +33,7 @@
                 "name": "站点Logo",
                 "type": "input",
                 "default": "/apple-touch-icon.png",
-                "help": "站点Logo图片URL，显示在左上角和浏览器标签页；加载失败时使用主题内置 Komari Logo。"
+                "help": "站点Logo图片URL，显示在左上角；浏览器标签页使用 Komari 后台设置的站点图标。加载失败时使用主题内置 Komari Logo。"
             },
             {
                 "key": "CustomIllustration",
