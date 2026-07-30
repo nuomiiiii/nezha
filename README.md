@@ -4,11 +4,16 @@
 [![Komari Theme](https://img.shields.io/badge/Komari-Theme-6366F1)](https://github.com/komari-monitor/theme-market)
 [![License](https://img.shields.io/github/license/nuomiiiii/nezha)](LICENSE)
 
-基于 [BITJEBE/nezha-BITJEBE](https://github.com/BITJEBE/nezha-BITJEBE) 二次开发的 [Komari Monitor](https://github.com/komari-monitor/komari) 自定义主题。当前版本为 `3.0.6`，已进入 Komari 官方主题商城。
+基于 [BITJEBE/nezha-BITJEBE](https://github.com/BITJEBE/nezha-BITJEBE) 二次开发的 [Komari Monitor](https://github.com/komari-monitor/komari) 自定义主题。当前版本为 `3.0.7`，已进入 Komari 官方主题商城。
 
 ![Nezha 主题预览](preview.png)
 
 ## 最近更新
+
+### 3.0.7
+
+- 修复首页未使用 Komari 后台自定义站点图标的问题，首页与后台浏览器标签页现在保持一致。
+- 站点 Logo 继续只用于主题页头展示，不再覆盖浏览器标签页图标。
 
 ### 3.0.6
 
