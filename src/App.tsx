@@ -102,6 +102,7 @@ const MainApp: React.FC = () => {
           <Routes>
             <Route path="/" element={<Server />} />
             <Route path="/server/:id" element={<ServerDetail />} />
+            <Route path="/instance/:id" element={<ServerDetail />} />
             <Route path="/error" element={<ErrorPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

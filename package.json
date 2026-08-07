@@ -1,13 +1,13 @@
 {
   "name": "nezha",
   "private": true,
-  "version": "3.0.8",
+  "version": "3.0.9",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "test": "node --test tests/ping-task-order.test.ts tests/currency-label.test.ts tests/network-chart-stability.test.ts tests/home-latency.test.ts tests/theme-settings.test.ts tests/billing-status.test.ts tests/ping-api-compat.test.ts tests/legacy-ping-api.test.ts tests/site-logo.test.ts tests/favicon.test.ts",
+    "test": "node --test tests/ping-task-order.test.ts tests/currency-label.test.ts tests/network-chart-stability.test.ts tests/home-latency.test.ts tests/theme-settings.test.ts tests/billing-status.test.ts tests/ping-api-compat.test.ts tests/legacy-ping-api.test.ts tests/site-logo.test.ts tests/favicon.test.ts tests/server-detail-route.test.ts",
     "lint:fix": "eslint --fix .",
     "format": "prettier --write .",
     "preview": "vite preview"
