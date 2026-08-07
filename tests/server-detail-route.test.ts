@@ -2,17 +2,18 @@ import assert from "node:assert/strict"
 import { readFileSync } from "node:fs"
 import test from "node:test"
 
-import { parsePingTaskId, resolveServerRouteId, uuidToNumber } from "../src/lib/server-route.ts"
+import { isNetworkView, parsePingTaskId, resolveServerRouteId, uuidToNumber } from "../src/lib/server-route.ts"
 
 test("supports both Komari server detail route conventions", () => {
   const app = readFileSync(new URL("../src/App.tsx", import.meta.url), "utf8")
   const manifest = JSON.parse(readFileSync(new URL("../komari-theme.json", import.meta.url), "utf8")) as {
-    navigation?: { server_detail?: string; ping_task_parameter?: string }
+    navigation?: { server_detail?: string; server_network?: string; ping_task_parameter?: string }
   }
 
   assert.match(app, /<Route path="\/server\/:id" element={<ServerDetail \/>} \/>/)
   assert.match(app, /<Route path="\/instance\/:id" element={<ServerDetail \/>} \/>/)
   assert.equal(manifest.navigation?.server_detail, "/server/{uuid}")
+  assert.equal(manifest.navigation?.server_network, "/server/{uuid}?view=network")
   assert.equal(manifest.navigation?.ping_task_parameter, "ping_task")
 })
 
@@ -33,6 +34,14 @@ test("accepts only positive safe ping task IDs", () => {
   assert.equal(parsePingTaskId(null), undefined)
 })
 
+test("opens the network overview only for the explicit network view", () => {
+  assert.equal(isNetworkView("network"), true)
+  assert.equal(isNetworkView("detail"), false)
+  assert.equal(isNetworkView("Network"), false)
+  assert.equal(isNetworkView(""), false)
+  assert.equal(isNetworkView(null), false)
+})
+
 test("uses one resolved server ID for overview, realtime charts and ping charts", () => {
   const page = readFileSync(new URL("../src/pages/ServerDetail.tsx", import.meta.url), "utf8")
   const overview = readFileSync(new URL("../src/components/ServerDetailOverview.tsx", import.meta.url), "utf8")
@@ -40,6 +49,8 @@ test("uses one resolved server ID for overview, realtime charts and ping charts"
   const network = readFileSync(new URL("../src/components/NetworkChart.tsx", import.meta.url), "utf8")
 
   assert.match(page, /resolveServerRouteId\(routeId\)/)
+  assert.match(page, /isNetworkView\(searchParams\.get\("view"\)\) \|\| pingTaskId !== undefined/)
+  assert.match(page, /setCurrentTab\(openNetworkView \? tabs\[1\] : tabs\[0\]\)/)
   assert.match(page, /<ServerDetailOverview server_id=\{serverId\}/)
   assert.match(page, /<ServerDetailChart server_id=\{serverId\}/)
   assert.match(page, /<NetworkChart server_id=\{serverId\}[^>]+initialMonitorId=\{pingTaskId\}/)

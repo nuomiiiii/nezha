@@ -3,7 +3,7 @@ import ServerDetailChart from "@/components/ServerDetailChart"
 import ServerDetailOverview from "@/components/ServerDetailOverview"
 import TabSwitch from "@/components/TabSwitch"
 import { Separator } from "@/components/ui/separator"
-import { parsePingTaskId, resolveServerRouteId } from "@/lib/server-route"
+import { isNetworkView, parsePingTaskId, resolveServerRouteId } from "@/lib/server-route"
 import { cn } from "@/lib/utils"
 import { useEffect, useState } from "react"
 import { Navigate, useParams, useSearchParams } from "react-router-dom"
@@ -18,12 +18,13 @@ export default function ServerDetail() {
   const { id: routeId } = useParams()
   const [searchParams] = useSearchParams()
   const pingTaskId = parsePingTaskId(searchParams.get("ping_task"))
+  const openNetworkView = isNetworkView(searchParams.get("view")) || pingTaskId !== undefined
   const serverId = routeId ? resolveServerRouteId(routeId) : null
-  const [currentTab, setCurrentTab] = useState(pingTaskId ? tabs[1] : tabs[0])
+  const [currentTab, setCurrentTab] = useState(openNetworkView ? tabs[1] : tabs[0])
 
   useEffect(() => {
-    if (pingTaskId) setCurrentTab(tabs[1])
-  }, [pingTaskId])
+    setCurrentTab(openNetworkView ? tabs[1] : tabs[0])
+  }, [openNetworkView, routeId])
 
   if (serverId === null) return <Navigate to="/404" replace />
 

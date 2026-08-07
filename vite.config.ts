@@ -3,7 +3,8 @@ import { execSync } from "node:child_process"
 import * as fs from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
-import { UserConfig, defineConfig } from "vite"
+import { defineConfig } from "vite"
+import type { UserConfig } from "vite"
 import dotenv from "dotenv"
 
 const getGitHash = () => {

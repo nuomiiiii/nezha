@@ -1,5 +1,6 @@
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const NUMERIC_ID_PATTERN = /^\d+$/
+const NETWORK_VIEW = "network"
 
 export const uuidToNumber = (uuid: string): number => {
   let hash = 0
@@ -27,4 +28,8 @@ export function parsePingTaskId(value: string | null): number | undefined {
 
   const taskId = Number(value)
   return Number.isSafeInteger(taskId) && taskId > 0 ? taskId : undefined
+}
+
+export function isNetworkView(value: string | null): boolean {
+  return value === NETWORK_VIEW
 }

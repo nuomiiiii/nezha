@@ -1,5 +1,16 @@
 # 更新日志
 
+## v3.1.1
+
+### 新增
+
+- 新增 `/server/{uuid}?view=network` 网络监控总览入口；主题清单同步声明 `server_network`，供 Komari 仪表盘直接进入服务器网络面板且不预选具体 Ping 任务。
+
+### 兼容性
+
+- 保留数字 ID 与 UUID、`/server/:id` 与 `/instance/:id`、原有 `ping_task` 任务深链；`view=network` 与 `ping_task` 同时存在时继续进入网络面板并选中指定任务。
+- 未携带 `view=network` 或 `ping_task` 的旧链接仍默认进入服务器详情，旧版 Komari 与上游 Nezha 的现有访问行为不变。
+
 ## v3.1.0
 
 ### 修复
