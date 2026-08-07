@@ -71,7 +71,7 @@ function metricTaskId(series: KomariMetricSeries): string {
 }
 
 function metricSeriesKey(series: KomariMetricSeries): string {
-  return `${series.entity_id || ""}\u0000${metricTaskId(series)}`
+  return `${series.entity_id || ""}^@${metricTaskId(series)}`
 }
 
 function metricPointCount(point: KomariMetricPoint): number {

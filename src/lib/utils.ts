@@ -1,10 +1,13 @@
 import { SharedClient } from "@/hooks/use-rpc2"
 import { detectCanadianDollarCurrency, getStaticCurrencyLabel } from "@/lib/currency-label"
 import { formatBytes } from "@/lib/format"
+import { uuidToNumber } from "@/lib/server-route"
 import { NezhaServer, NezhaWebsocketResponse } from "@/types/nezha-api"
 import { type ClassValue, clsx } from "clsx"
 import dayjs from "dayjs"
 import { twMerge } from "tailwind-merge"
+
+export { uuidToNumber } from "@/lib/server-route"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -498,15 +501,6 @@ export function handlePublicNote(serverKey: string | number, publicNote: string)
 
   sessionStorage.setItem(storageKey, publicNote)
   return publicNote
-}
-
-export const uuidToNumber = (uuid: string): number => {
-  let hash = 0
-  for (let i = 0; i < uuid.length; i++) {
-    const charCode = uuid.charCodeAt(i)
-    hash = charCode + ((hash << 5) - hash)
-  }
-  return hash >>> 0
 }
 
 let km_servers_cache: any[] = []

@@ -16,7 +16,7 @@ import { useNavigate } from "react-router-dom"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
 
-export default function ServerDetailOverview({ server_id }: { server_id: string }) {
+export default function ServerDetailOverview({ server_id }: { server_id: number }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
@@ -49,7 +49,7 @@ export default function ServerDetailOverview({ server_id }: { server_id: string 
     return <ServerDetailLoading />
   }
 
-  const server = nezhaWsData.servers.find((s) => s.id === Number(server_id))
+  const server = nezhaWsData.servers.find((s) => s.id === server_id)
 
   if (!server) {
     return <ServerDetailLoading />

@@ -44,7 +44,7 @@ type connectChartData = {
   udp: number
 }
 
-export default function ServerDetailChart({ server_id }: { server_id: string }) {
+export default function ServerDetailChart({ server_id }: { server_id: number }) {
   const { lastMessage, connected, messageHistory } = useWebSocketContext()
 
   if (!connected && !lastMessage) {
@@ -57,7 +57,7 @@ export default function ServerDetailChart({ server_id }: { server_id: string }) 
     return <ServerDetailChartLoading />
   }
 
-  const server = nezhaWsData.servers.find((s) => s.id === Number(server_id))
+  const server = nezhaWsData.servers.find((s) => s.id === server_id)
 
   if (!server) {
     return <ServerDetailChartLoading />

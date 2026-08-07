@@ -90,7 +90,7 @@ const TIME_OPTIONS = [
   { value: "720", label: "30d" },
 ]
 
-export function NetworkChart({ server_id, show }: { server_id: number; show: boolean }) {
+export function NetworkChart({ server_id, show, initialMonitorId }: { server_id: number; show: boolean; initialMonitorId?: number }) {
   const { t } = useTranslation()
   const { lastMessage } = useWebSocketContext()
   const [hours, setHours] = React.useState(1)
@@ -132,6 +132,7 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
   const transformedData = monitorRecords.length > 0 ? transformData(monitorRecords) : {}
 
   const formattedData = monitorRecords.length > 0 ? formatData(monitorRecords) : []
+  const initialChart = monitorRecords.find((monitor) => monitor.monitor_id === initialMonitorId)?.monitor_name
 
   const chartDataKey = Object.keys(transformedData)
 
@@ -158,6 +159,7 @@ export function NetworkChart({ server_id, show }: { server_id: number; show: boo
       isLoading={isLoading}
       isEmpty={isEmpty}
       hasError={hasInitialError}
+      initialChart={initialChart}
       onHoursChange={setHours}
       onRetry={() => void refetch()}
     />
@@ -174,6 +176,7 @@ export const NetworkChartClient = React.memo(function NetworkChart({
   isLoading,
   isEmpty,
   hasError,
+  initialChart,
   onHoursChange,
   onRetry,
 }: {
@@ -186,6 +189,7 @@ export const NetworkChartClient = React.memo(function NetworkChart({
   isLoading: boolean
   isEmpty: boolean
   hasError: boolean
+  initialChart?: string
   onHoursChange: (hours: number) => void
   onRetry: () => void
 }) {
@@ -198,7 +202,14 @@ export const NetworkChartClient = React.memo(function NetworkChart({
 
   // Change from string to string array for multi-selection
   const [activeCharts, setActiveCharts] = React.useState<string[]>([])
+  const appliedInitialChart = React.useRef<string | undefined>(undefined)
   const [isPeakEnabled, setIsPeakEnabled] = React.useState(forcePeakCutEnabled)
+
+  React.useEffect(() => {
+    if (!initialChart || appliedInitialChart.current === initialChart || !chartDataKey.includes(initialChart)) return
+    appliedInitialChart.current = initialChart
+    setActiveCharts([initialChart])
+  }, [chartDataKey, initialChart])
 
   // Function to clear all selected charts
   const clearAllSelections = useCallback(() => {
