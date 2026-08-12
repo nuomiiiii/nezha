@@ -6,7 +6,7 @@ const Footer: React.FC = () => {
   const isMac = /macintosh|mac os x/i.test(navigator.userAgent)
 
   return (
-    <footer className="mx-auto w-full max-w-5xl px-4 lg:px-0 pb-4 server-footer">
+    <footer className="mx-auto w-full max-w-5xl px-4 lg:px-0 pb-4 server-footer nezha-page-footer">
       <section className="flex flex-col">
         <section className="mt-1 flex items-center sm:flex-row flex-col justify-between gap-2 text-[13px] font-light tracking-tight text-neutral-600/50 dark:text-neutral-300/50 server-footer-name">
           <div className="flex items-center gap-1">

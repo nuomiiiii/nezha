@@ -6,6 +6,7 @@ declare global {
     CustomMobileBackgroundImage: string
     ForceShowServices: boolean
     ForceCardInline: boolean
+    EnableVerticalCard: boolean
     ForceShowMap: boolean
     ForcePeakCutEnabled: boolean
   }

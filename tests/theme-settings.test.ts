@@ -15,6 +15,10 @@ test("uses Nezha as the visible theme name without changing its internal id", ()
 })
 
 test("uses the overview card as the default layout", () => {
+  assert.equal(setting("EnableVerticalCard")?.default, false)
+  assert.equal(setting("EnableVerticalCard")?.type, "switch")
+  assert.equal(setting("CardLayout"), undefined)
+  assert.equal(setting("ForceCardInline")?.default, false)
   assert.equal(setting("FixedLeftServerName")?.default, false)
   assert.equal(setting("FixedTopServerName")?.default, false)
   assert.equal(setting("FixedTopLeftServerName"), undefined)
@@ -38,4 +42,12 @@ test("hides the remaining-days time bar by default", () => {
 
 test("shows home latency by default", () => {
   assert.equal(setting("ShowHomeLatency")?.default, true)
+})
+
+test("keeps vertical cards compatible with existing visibility settings", () => {
+  assert.equal(setting("ShowTrafficBar")?.default, true)
+  assert.equal(setting("ShowNetTransfer")?.default, true)
+  assert.equal(setting("HideIPv4IPv6Tag")?.default, false)
+  assert.equal(setting("HideTrafficVolTag")?.default, false)
+  assert.equal(setting("DisableRemainingDaysBar")?.default, true)
 })

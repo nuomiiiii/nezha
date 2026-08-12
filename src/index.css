@@ -232,3 +232,17 @@
 .scrollbar-hidden::-webkit-scrollbar {
   display: none; /* Chrome, Safari 和 Opera */
 }
+
+@media (min-width: 1024px) {
+  html[data-server-card-layout="vertical"] .nezha-page-header,
+  html[data-server-card-layout="vertical"] .nezha-page-footer {
+    max-width: 80rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  html[data-server-card-layout="vertical"] .nezha-page-header,
+  html[data-server-card-layout="vertical"] .nezha-page-footer {
+    max-width: 90rem;
+  }
+}

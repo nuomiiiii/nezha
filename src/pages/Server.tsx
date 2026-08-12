@@ -3,6 +3,7 @@ import GlobalMap from "@/components/GlobalMap"
 import GroupSwitch from "@/components/GroupSwitch"
 import ServerCard from "@/components/ServerCard"
 import ServerCardInline from "@/components/ServerCardInline"
+import ServerCardVertical from "@/components/ServerCardVertical"
 import ServerOverview from "@/components/ServerOverview"
 import { ServiceTracker } from "@/components/ServiceTracker"
 import VisitorCapsuleBar from "@/components/VisitorCapsuleBar"
@@ -33,6 +34,13 @@ const EMPTY_HOME_LATENCY: HomeLatencySummary = {
   updatedAt: null,
 }
 
+type CardLayout = "standard" | "vertical" | "inline"
+
+function configuredBaseCardLayout(): Exclude<CardLayout, "inline"> {
+  const win = window as unknown as Record<string, unknown>
+  return win.EnableVerticalCard === true ? "vertical" : "standard"
+}
+
 function homeLatencyStorage(): Storage | null {
   try {
     return window.sessionStorage
@@ -52,7 +60,7 @@ export default function Servers() {
   const { status } = useStatus()
   const [showServices, setShowServices] = useState<string>("0")
   const [showMap, setShowMap] = useState<string>("0")
-  const [inline, setInline] = useState<string>("0")
+  const [cardLayout, setCardLayout] = useState<CardLayout>("standard")
   const containerRef = useRef<HTMLDivElement>(null)
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false)
   const [currentGroup, setCurrentGroup] = useState<string>("All")
@@ -101,27 +109,38 @@ export default function Servers() {
   }, [])
 
   useEffect(() => {
-    const checkInlineSettings = () => {
+    const checkCardLayout = () => {
       const isMobile = window.innerWidth < 768
+      const forceInline = window.ForceCardInline === true
+      const baseLayout = configuredBaseCardLayout()
+      const legacyInline = localStorage.getItem("inline") === "1"
+      const nextLayout = forceInline || legacyInline ? "inline" : baseLayout
 
-      if (!isMobile) {
-        const inlineState = localStorage.getItem("inline")
-        if (window.ForceCardInline) {
-          setInline("1")
-        } else if (inlineState !== null) {
-          setInline(inlineState)
-        }
-      }
+      setCardLayout(isMobile && nextLayout === "inline" ? baseLayout : nextLayout)
     }
 
-    checkInlineSettings()
+    checkCardLayout()
 
-    window.addEventListener("resize", checkInlineSettings)
+    window.addEventListener("resize", checkCardLayout)
 
     return () => {
-      window.removeEventListener("resize", checkInlineSettings)
+      window.removeEventListener("resize", checkCardLayout)
     }
   }, [])
+
+  const toggleInlineLayout = () => {
+    const nextLayout: CardLayout = cardLayout === "inline" ? configuredBaseCardLayout() : "inline"
+    setCardLayout(nextLayout)
+    localStorage.setItem("inline", nextLayout === "inline" ? "1" : "0")
+  }
+
+  useEffect(() => {
+    document.documentElement.dataset.serverCardLayout = cardLayout
+
+    return () => {
+      delete document.documentElement.dataset.serverCardLayout
+    }
+  }, [cardLayout])
 
   useEffect(() => {
     const showMapState = localStorage.getItem("showMap")
@@ -263,7 +282,7 @@ export default function Servers() {
   })
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-0">
+    <div className={cn("mx-auto w-full px-0", cardLayout === "vertical" ? "max-w-7xl 2xl:max-w-[90rem]" : "max-w-5xl")}>
       <ServerOverview
         total={totalServers}
         online={onlineServers}
@@ -322,15 +341,14 @@ export default function Servers() {
             />
           </button>
           <button
-            onClick={() => {
-              setInline(inline === "0" ? "1" : "0")
-              localStorage.setItem("inline", inline === "0" ? "1" : "0")
-            }}
+            onClick={toggleInlineLayout}
+            title={cardLayout === "inline" ? "退出行内卡片" : "切换到行内卡片"}
+            aria-label="切换服务器卡片布局"
             className={cn(
               "rounded-[50px] bg-white dark:bg-stone-800 cursor-pointer p-[10px] transition-all border dark:border-none border-stone-200 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]",
               {
-                "shadow-[inset_0_1px_0_rgba(0,0,0,0.2)] !bg-blue-600 hover:!bg-blue-600 border-blue-600 dark:border-blue-600": inline === "1",
-                "text-white": inline === "1",
+                "shadow-[inset_0_1px_0_rgba(0,0,0,0.2)] !bg-blue-600 hover:!bg-blue-600 border-blue-600 dark:border-blue-600": cardLayout === "inline",
+                "text-white": cardLayout === "inline",
               },
               {
                 "bg-opacity-70 dark:bg-opacity-70": customBackgroundImage,
@@ -339,7 +357,7 @@ export default function Servers() {
           >
             <ViewColumnsIcon
               className={cn("size-[13px]", {
-                "text-white": inline === "1",
+                "text-white": cardLayout === "inline",
               })}
             />
           </button>
@@ -406,7 +424,7 @@ export default function Servers() {
       </div>
       {showMap === "1" && <GlobalMap now={nezhaWsData.now} serverList={nezhaWsData?.servers || []} />}
       {showServices === "1" && <ServiceTracker serverList={filteredServers} />}
-      {inline === "1" && (
+      {cardLayout === "inline" && (
         <section ref={containerRef} className="flex flex-col gap-2 overflow-x-scroll scrollbar-hidden mt-6 server-inline-list">
           {filteredServers.map((serverInfo) => (
             <ServerCardInline
@@ -418,10 +436,22 @@ export default function Servers() {
           ))}
         </section>
       )}
-      {inline === "0" && (
+      {cardLayout === "standard" && (
         <section ref={containerRef} className="grid grid-cols-1 gap-2 md:grid-cols-2 mt-6 server-card-list">
           {filteredServers.map((serverInfo) => (
             <ServerCard
+              now={nezhaWsData.now}
+              key={serverInfo.id}
+              serverInfo={serverInfo}
+              latencySummary={showHomeLatency ? (serverInfo.uuid ? homeLatency[serverInfo.uuid] : undefined) || EMPTY_HOME_LATENCY : undefined}
+            />
+          ))}
+        </section>
+      )}
+      {cardLayout === "vertical" && (
+        <section ref={containerRef} className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 server-card-list server-card-list-vertical">
+          {filteredServers.map((serverInfo) => (
+            <ServerCardVertical
               now={nezhaWsData.now}
               key={serverInfo.id}
               serverInfo={serverInfo}

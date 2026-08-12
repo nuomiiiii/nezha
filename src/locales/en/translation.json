@@ -36,7 +36,12 @@
     "system": "System",
     "uptime": "Uptime",
     "totalUpload": "Upload",
-    "totalDownload": "Download"
+    "totalDownload": "Download",
+    "load": "Load",
+    "realtimeTransfer": "Live Transfer",
+    "networkQuality": "Network Quality",
+    "recentHour": "Last Hour",
+    "monthlyTraffic": "Monthly Traffic"
   },
   "cycleTransfer": {
     "used": "used",

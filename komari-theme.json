@@ -2,7 +2,7 @@
     "name": "Nezha",
     "short": "nezha",
     "description": "Nezha Theme for Komari Monitor",
-    "version": "3.1.1",
+    "version": "3.1.2",
     "author": "Nomi",
     "url": "https://github.com/nuomiiiii/nezha",
     "upstream": "https://github.com/BITJEBE/nezha-BITJEBE",
@@ -85,7 +85,7 @@
                 "name": "行内卡片模式",
                 "type": "switch",
                 "default": false,
-                "help": "开启后服务器卡片使用紧凑的行内布局模式。"
+                "help": "兼容旧配置。开启后强制使用紧凑的行内布局，并优先于其他卡片模式。"
             },
             {
                 "key": "GroupOrder",
@@ -170,6 +170,13 @@
             {
                 "name": "卡片显示设置",
                 "type": "title"
+            },
+            {
+                "key": "EnableVerticalCard",
+                "name": "启用竖排卡片",
+                "type": "switch",
+                "default": false,
+                "help": "开启后使用新版竖排服务器卡片，宽屏每行四张、普通电脑三张、平板两张、手机一张；关闭时保持原横排卡片。行内卡片模式仍具有最高优先级。"
             },
             {
                 "key": "FixedLeftServerName",

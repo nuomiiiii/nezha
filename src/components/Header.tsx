@@ -58,7 +58,7 @@ function Header() {
   const customBackgroundImage = backgroundImage
 
   return (
-    <div className="mx-auto w-full max-w-5xl">
+    <div className="nezha-page-header mx-auto w-full max-w-5xl">
       <section className="flex items-center justify-between header-top">
         <section
           onClick={() => {

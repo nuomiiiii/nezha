@@ -36,7 +36,12 @@
     "system": "系统",
     "uptime": "运行时间",
     "totalUpload": "总上传",
-    "totalDownload": "总下载"
+    "totalDownload": "总下载",
+    "load": "负载",
+    "realtimeTransfer": "实时传输",
+    "networkQuality": "网络质量",
+    "recentHour": "最近 1 小时",
+    "monthlyTraffic": "本月流量"
   },
   "cycleTransfer": {
     "used": "已使用",

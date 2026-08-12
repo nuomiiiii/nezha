@@ -36,7 +36,12 @@
     "system": "系統",
     "uptime": "運行時間",
     "totalUpload": "總上傳",
-    "totalDownload": "總下載"
+    "totalDownload": "總下載",
+    "load": "負載",
+    "realtimeTransfer": "即時傳輸",
+    "networkQuality": "網路品質",
+    "recentHour": "最近 1 小時",
+    "monthlyTraffic": "本月流量"
   },
   "cycleTransfer": {
     "used": "已使用",

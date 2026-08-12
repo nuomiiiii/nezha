@@ -8,10 +8,12 @@ export default function BillingInfo({
   parsedData,
   showProgress = true,
   compact = false,
+  stacked = false,
 }: {
   parsedData: PublicNoteData
   showProgress?: boolean
   compact?: boolean
+  stacked?: boolean
 }) {
   const { t } = useTranslation()
   if (!parsedData || !parsedData.billingDataMod) {
@@ -55,6 +57,39 @@ export default function BillingInfo({
     const remainingValue = isNeverExpire
       ? t("billingInfo.indefinite")
       : `${Math.abs(daysLeftObject.days)} ${t("billingInfo.days")}`
+
+    if (stacked) {
+      return (
+        <div className="shrink-0 rounded-full border border-border/70 bg-muted/45 px-3 py-1.5">
+          <div className="flex min-h-4 items-baseline justify-end gap-1 whitespace-nowrap">
+            {hasPrice ? (
+              <>
+                <span className="text-[10px] text-muted-foreground">{t("billingInfo.price")}</span>
+                <span className="truncate text-[10px] font-semibold leading-4 text-foreground">{billingPrice}</span>
+              </>
+            ) : billingData.amount === "-1" ? (
+              <>
+                <span className="text-[10px] text-muted-foreground">{t("billingInfo.price")}</span>
+                <span className="text-[10px] font-semibold leading-4 text-emerald-500 dark:text-emerald-400">{t("billingInfo.free")}</span>
+              </>
+            ) : null}
+            <span className="mx-0.5 text-[10px] text-border">/</span>
+            <span className="text-[10px] text-muted-foreground">{remainingLabel}</span>
+            <span
+              className={cn(
+                "truncate text-[10px] font-semibold leading-4",
+                remainingTone === "danger" ? "text-red-500 dark:text-red-400" : "text-emerald-500 dark:text-emerald-400",
+              )}
+            >
+              {remainingValue}
+            </span>
+          </div>
+          {showProgress && !isNeverExpire && daysLeftObject.days >= 0 && (
+            <RemainPercentBar className="mt-1" value={daysLeftObject.remainingPercentage * 100} />
+          )}
+        </div>
+      )
+    }
 
     return (
       <div className="min-w-0">
