@@ -27,13 +27,16 @@ export default function ServerOverview({ online, offline, total, up, down, upSpe
   const customIllustration = window.CustomIllustration || "/animated-man.webp"
 
   const customBackgroundImage = (window.CustomBackgroundImage as string) !== "" ? window.CustomBackgroundImage : undefined
+  const overviewContentClassName = vertical ? "flex h-full items-start px-4 py-3 sm:px-6" : "flex h-full items-center px-6 py-3"
+  const overviewStackClassName = cn("flex flex-col gap-1", vertical && "w-full")
+  const overviewValueClassName = cn("flex items-center gap-2", vertical && "h-9")
 
   return (
     <>
       <section
         className={cn(
           "grid server-overview",
-          vertical ? "grid-cols-2 gap-3 lg:grid-cols-3 2xl:grid-cols-4" : "grid-cols-2 gap-4 lg:grid-cols-4",
+          vertical ? "auto-rows-fr grid-cols-2 gap-3 lg:grid-cols-3 2xl:grid-cols-4" : "grid-cols-2 gap-4 lg:grid-cols-4",
         )}
       >
         <Card
@@ -44,10 +47,10 @@ export default function ServerOverview({ online, offline, total, up, down, upSpe
             "bg-card/70": customBackgroundImage,
           })}
         >
-          <CardContent className="flex h-full items-center px-6 py-3">
-            <section className="flex flex-col gap-1">
-              <p className="text-sm font-medium md:text-base">{t("serverOverview.totalServers")}</p>
-              <div className="flex items-center gap-2">
+          <CardContent className={overviewContentClassName}>
+            <section className={overviewStackClassName}>
+              <p className={cn("text-sm font-medium md:text-base", vertical && "truncate")}>{t("serverOverview.totalServers")}</p>
+              <div className={overviewValueClassName}>
                 <span className="relative flex h-2 w-2">
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500"></span>
                 </span>
@@ -71,10 +74,10 @@ export default function ServerOverview({ online, offline, total, up, down, upSpe
             },
           )}
         >
-          <CardContent className="flex h-full items-center px-6 py-3">
-            <section className="flex flex-col gap-1">
-              <p className="text-sm font-medium md:text-base">{t("serverOverview.onlineServers")}</p>
-              <div className="flex items-center gap-2">
+          <CardContent className={overviewContentClassName}>
+            <section className={overviewStackClassName}>
+              <p className={cn("text-sm font-medium md:text-base", vertical && "truncate")}>{t("serverOverview.onlineServers")}</p>
+              <div className={overviewValueClassName}>
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75"></span>
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
@@ -100,10 +103,10 @@ export default function ServerOverview({ online, offline, total, up, down, upSpe
             },
           )}
         >
-          <CardContent className="flex h-full items-center px-6 py-3">
-            <section className="flex flex-col gap-1">
-              <p className="text-sm font-medium md:text-base">{t("serverOverview.offlineServers")}</p>
-              <div className="flex items-center gap-2">
+          <CardContent className={overviewContentClassName}>
+            <section className={overviewStackClassName}>
+              <p className={cn("text-sm font-medium md:text-base", vertical && "truncate")}>{t("serverOverview.offlineServers")}</p>
+              <div className={overviewValueClassName}>
                 <span className="relative flex h-2 w-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
@@ -121,7 +124,7 @@ export default function ServerOverview({ online, offline, total, up, down, upSpe
               "border-transparent ring-2 ring-red-500": status === "offline",
             })}
           >
-            <CardContent className="flex h-full items-center px-6 py-3">
+            <CardContent className={overviewContentClassName}>
               <section className="grid w-full grid-cols-2 divide-x divide-border">
                 <button
                   type="button"
@@ -129,7 +132,7 @@ export default function ServerOverview({ online, offline, total, up, down, upSpe
                   className="flex min-w-0 flex-col gap-1 pr-4 text-left"
                 >
                   <p className="truncate text-sm font-medium">{t("serverOverview.onlineServers")}</p>
-                  <div className="flex items-center gap-2">
+                  <div className={overviewValueClassName}>
                     <span className="relative flex h-2 w-2">
                       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75"></span>
                       <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
@@ -143,7 +146,7 @@ export default function ServerOverview({ online, offline, total, up, down, upSpe
                   className="flex min-w-0 flex-col gap-1 pl-4 text-left"
                 >
                   <p className="truncate text-sm font-medium">{t("serverOverview.offlineServers")}</p>
-                  <div className="flex items-center gap-2">
+                  <div className={overviewValueClassName}>
                     <span className="relative flex h-2 w-2">
                       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
                       <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
@@ -160,21 +163,21 @@ export default function ServerOverview({ online, offline, total, up, down, upSpe
             "bg-card/70": customBackgroundImage,
           })}
         >
-          <CardContent className="flex h-full items-center relative px-6 py-3">
-            <section className="flex flex-col gap-1 w-full">
+          <CardContent className={cn("relative", overviewContentClassName)}>
+            <section className="flex w-full flex-col gap-1">
               <div className="flex items-center w-full justify-between">
-                <p className="text-sm font-medium md:text-base">{t("serverOverview.network")}</p>
+                <p className={cn("text-sm font-medium md:text-base", vertical && "truncate")}>{t("serverOverview.network")}</p>
               </div>
               <section className="flex items-start flex-row z-10 pr-0 gap-1">
-                <p className="sm:text-[12px] text-[10px] text-blue-800 dark:text-blue-400   text-nowrap font-medium">↑{formatBytes(up)}</p>
-                <p className="sm:text-[12px] text-[10px]  text-purple-800 dark:text-purple-400  text-nowrap font-medium">↓{formatBytes(down)}</p>
+                <p className="sm:text-[12px] text-[10px] text-blue-800 dark:text-blue-400 text-nowrap font-medium">↑{formatBytes(up)}</p>
+                <p className="sm:text-[12px] text-[10px] text-purple-800 dark:text-purple-400 text-nowrap font-medium">↓{formatBytes(down)}</p>
               </section>
               <section className="flex flex-col sm:flex-row -mr-1 sm:items-center items-start gap-1">
                 <p className="text-[11px] flex items-center text-nowrap font-semibold">
                   <ArrowUpCircleIcon className="size-3 mr-0.5 sm:mb-[1px]" />
                   {formatBytes(upSpeed)}/s
                 </p>
-                <p className="text-[11px] flex items-center  text-nowrap font-semibold">
+                <p className="text-[11px] flex items-center text-nowrap font-semibold">
                   <ArrowDownCircleIcon className="size-3 mr-0.5" />
                   {formatBytes(downSpeed)}/s
                 </p>

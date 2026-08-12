@@ -18,13 +18,20 @@ test("aligns the overview grid with vertical card columns and spacing", () => {
   assert.match(serverPage, /vertical=\{cardLayout === "vertical"\}/)
   assert.match(
     serverOverview,
-    /vertical \? "grid-cols-2 gap-3 lg:grid-cols-3 2xl:grid-cols-4" : "grid-cols-2 gap-4 lg:grid-cols-4"/,
+    /vertical \? "auto-rows-fr grid-cols-2 gap-3 lg:grid-cols-3 2xl:grid-cols-4" : "grid-cols-2 gap-4 lg:grid-cols-4"/,
   )
   assert.match(serverOverview, /vertical && "lg:hidden 2xl:block"/)
   assert.match(serverOverview, /hidden ring-1 ring-transparent transition-all lg:block 2xl:hidden/)
   assert.match(serverOverview, /ring-2 ring-green-500": status === "online"/)
   assert.match(serverOverview, /ring-2 ring-red-500": status === "offline"/)
   assert.match(serverOverview, /grid w-full grid-cols-2 divide-x divide-border/)
+  assert.match(serverOverview, /vertical \? "flex h-full items-start px-4 py-3 sm:px-6" : "flex h-full items-center px-6 py-3"/)
+  assert.match(serverOverview, /vertical && "h-9"/)
+  assert.match(serverOverview, /flex items-start flex-row z-10 pr-0 gap-1/)
+  assert.match(serverOverview, /flex flex-col sm:flex-row -mr-1 sm:items-center items-start gap-1/)
+  assert.match(serverOverview, /<ArrowUpCircleIcon className="size-3 mr-0\.5 sm:mb-\[1px\]" \/>/)
+  assert.match(serverOverview, /<ArrowDownCircleIcon className="size-3 mr-0\.5" \/>/)
+  assert.doesNotMatch(serverOverview, /grid h-9 w-full grid-cols-2 items-center gap-x-2/)
 })
 
 test("keeps the original card default behind an independent vertical-card switch", () => {
