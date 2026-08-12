@@ -18,7 +18,7 @@ test("aligns the overview grid with vertical card columns and spacing", () => {
   assert.match(serverPage, /vertical=\{cardLayout === "vertical"\}/)
   assert.match(
     serverOverview,
-    /vertical \? "grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" : "grid-cols-2 gap-4 lg:grid-cols-4"/,
+    /vertical \? "grid-cols-2 gap-3 lg:grid-cols-3 2xl:grid-cols-4" : "grid-cols-2 gap-4 lg:grid-cols-4"/,
   )
   assert.match(serverOverview, /vertical && "lg:hidden 2xl:block"/)
   assert.match(serverOverview, /hidden ring-1 ring-transparent transition-all lg:block 2xl:hidden/)

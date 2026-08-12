@@ -33,7 +33,7 @@ export default function ServerOverview({ online, offline, total, up, down, upSpe
       <section
         className={cn(
           "grid server-overview",
-          vertical ? "grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" : "grid-cols-2 gap-4 lg:grid-cols-4",
+          vertical ? "grid-cols-2 gap-3 lg:grid-cols-3 2xl:grid-cols-4" : "grid-cols-2 gap-4 lg:grid-cols-4",
         )}
       >
         <Card
