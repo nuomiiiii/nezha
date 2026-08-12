@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs"
 import test from "node:test"
 
 const serverPage = readFileSync(new URL("../src/pages/Server.tsx", import.meta.url), "utf8")
+const serverOverview = readFileSync(new URL("../src/components/ServerOverview.tsx", import.meta.url), "utf8")
 const verticalCard = readFileSync(new URL("../src/components/ServerCardVertical.tsx", import.meta.url), "utf8")
 const header = readFileSync(new URL("../src/components/Header.tsx", import.meta.url), "utf8")
 const footer = readFileSync(new URL("../src/components/Footer.tsx", import.meta.url), "utf8")
@@ -11,6 +12,19 @@ const styles = readFileSync(new URL("../src/index.css", import.meta.url), "utf8"
 test("uses one to four columns from mobile through wide desktop", () => {
   assert.match(serverPage, /mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4/)
   assert.match(serverPage, /max-w-7xl 2xl:max-w-\[90rem\]/)
+})
+
+test("aligns the overview grid with vertical card columns and spacing", () => {
+  assert.match(serverPage, /vertical=\{cardLayout === "vertical"\}/)
+  assert.match(
+    serverOverview,
+    /vertical \? "grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" : "grid-cols-2 gap-4 lg:grid-cols-4"/,
+  )
+  assert.match(serverOverview, /vertical && "lg:hidden 2xl:block"/)
+  assert.match(serverOverview, /hidden ring-1 ring-transparent transition-all lg:block 2xl:hidden/)
+  assert.match(serverOverview, /ring-2 ring-green-500": status === "online"/)
+  assert.match(serverOverview, /ring-2 ring-red-500": status === "offline"/)
+  assert.match(serverOverview, /grid w-full grid-cols-2 divide-x divide-border/)
 })
 
 test("keeps the original card default behind an independent vertical-card switch", () => {

@@ -13,9 +13,10 @@ type ServerOverviewProps = {
   down: number
   upSpeed: number
   downSpeed: number
+  vertical?: boolean
 }
 
-export default function ServerOverview({ online, offline, total, up, down, upSpeed, downSpeed }: ServerOverviewProps) {
+export default function ServerOverview({ online, offline, total, up, down, upSpeed, downSpeed, vertical = false }: ServerOverviewProps) {
   const { t } = useTranslation()
   const { status, setStatus } = useStatus()
 
@@ -29,7 +30,12 @@ export default function ServerOverview({ online, offline, total, up, down, upSpe
 
   return (
     <>
-      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4 server-overview">
+      <section
+        className={cn(
+          "grid server-overview",
+          vertical ? "grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" : "grid-cols-2 gap-4 lg:grid-cols-4",
+        )}
+      >
         <Card
           onClick={() => {
             setStatus("all")
@@ -56,6 +62,7 @@ export default function ServerOverview({ online, offline, total, up, down, upSpe
           }}
           className={cn(
             "cursor-pointer hover:ring-green-500 ring-1 ring-transparent transition-all",
+            vertical && "lg:hidden 2xl:block",
             {
               "bg-card/70": customBackgroundImage,
             },
@@ -84,6 +91,7 @@ export default function ServerOverview({ online, offline, total, up, down, upSpe
           }}
           className={cn(
             "cursor-pointer hover:ring-red-500 ring-1 ring-transparent transition-all",
+            vertical && "lg:hidden 2xl:block",
             {
               "bg-card/70": customBackgroundImage,
             },
@@ -105,6 +113,48 @@ export default function ServerOverview({ online, offline, total, up, down, upSpe
             </section>
           </CardContent>
         </Card>
+        {vertical && (
+          <Card
+            className={cn("hidden ring-1 ring-transparent transition-all lg:block 2xl:hidden", {
+              "bg-card/70": customBackgroundImage,
+              "border-transparent ring-2 ring-green-500": status === "online",
+              "border-transparent ring-2 ring-red-500": status === "offline",
+            })}
+          >
+            <CardContent className="flex h-full items-center px-6 py-3">
+              <section className="grid w-full grid-cols-2 divide-x divide-border">
+                <button
+                  type="button"
+                  onClick={() => setStatus("online")}
+                  className="flex min-w-0 flex-col gap-1 pr-4 text-left"
+                >
+                  <p className="truncate text-sm font-medium">{t("serverOverview.onlineServers")}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75"></span>
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+                    </span>
+                    <div className="text-lg font-semibold">{online}</div>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStatus("offline")}
+                  className="flex min-w-0 flex-col gap-1 pl-4 text-left"
+                >
+                  <p className="truncate text-sm font-medium">{t("serverOverview.offlineServers")}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
+                    </span>
+                    <div className="text-lg font-semibold">{offline}</div>
+                  </div>
+                </button>
+              </section>
+            </CardContent>
+          </Card>
+        )}
         <Card
           className={cn("hover:ring-purple-500 ring-1 ring-transparent transition-all", {
             "bg-card/70": customBackgroundImage,

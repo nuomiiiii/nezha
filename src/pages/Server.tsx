@@ -291,6 +291,7 @@ export default function Servers() {
         down={down}
         upSpeed={upSpeed}
         downSpeed={downSpeed}
+        vertical={cardLayout === "vertical"}
       />
       {showVisitorCapsule && <VisitorCapsuleBar />}
       {showAssetCard && <AssetSummaryWidget now={nezhaWsData.now} servers={groupFilteredServers} />}
