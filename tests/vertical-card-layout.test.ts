@@ -4,6 +4,7 @@ import test from "node:test"
 
 const serverPage = readFileSync(new URL("../src/pages/Server.tsx", import.meta.url), "utf8")
 const serverOverview = readFileSync(new URL("../src/components/ServerOverview.tsx", import.meta.url), "utf8")
+const defaultCard = readFileSync(new URL("../src/components/ServerCard.tsx", import.meta.url), "utf8")
 const verticalCard = readFileSync(new URL("../src/components/ServerCardVertical.tsx", import.meta.url), "utf8")
 const header = readFileSync(new URL("../src/components/Header.tsx", import.meta.url), "utf8")
 const footer = readFileSync(new URL("../src/components/Footer.tsx", import.meta.url), "utf8")
@@ -63,14 +64,26 @@ test("places each cumulative transfer beside its upload or download label", () =
   assert.doesNotMatch(verticalCard, /mt-0\.5 truncate text-\[10px\]/)
 })
 
+test("optically centers the default transfer labels with their arrow icons", () => {
+  const defaultBranch = defaultCard.slice(0, defaultCard.indexOf("  return online ? ("))
+
+  assert.match(defaultBranch, /flex shrink-0 items-center gap-1 text-xs/)
+  assert.match(defaultBranch, /<span className="leading-none">\{label\}<\/span>/)
+  assert.doesNotMatch(defaultBranch, /items-end gap-1\.5 text-xs/)
+})
+
 test("keeps price and remaining days on one line in the bottom-right capsule", () => {
   const billingInfo = readFileSync(new URL("../src/components/billingInfo.tsx", import.meta.url), "utf8")
   assert.match(billingInfo, /stacked = false/)
   assert.match(billingInfo, /shrink-0 rounded-full border border-border\/70 bg-muted\/45/)
   assert.match(billingInfo, /whitespace-nowrap/)
-  assert.match(billingInfo, /text-border">\/<\/span>/)
+  assert.match(billingInfo, /const capsuleTextClass = "text-\[10px\]"/)
+  assert.match(billingInfo, /capsuleDensity === "dense" \? "gap-0\.5" : "gap-1"/)
+  assert.match(billingInfo, /capsuleDensity === "dense" \? "px-2\.5 py-0\.5" : "px-3 py-1\.5"/)
+  assert.match(billingInfo, /capsuleDensity === "dense" \? "h-4 items-center" : "min-h-4 items-baseline"/)
   assert.match(verticalCard, /items-center justify-between/)
   assert.match(verticalCard, /stacked/)
+  assert.doesNotMatch(verticalCard, /capsuleDensity="dense"/)
   assert.doesNotMatch(verticalCard, /centeredColumns/)
 })
 
@@ -108,4 +121,36 @@ test("centers the header icons with the two-line identity block", () => {
 test("uses the whole card as the detail affordance without redundant copy", () => {
   assert.match(verticalCard, /onClick=\{cardClick\}/)
   assert.doesNotMatch(verticalCard, /viewDetails|查看详情/)
+})
+
+test("matches the default card billing and transfer details to the vertical card", () => {
+  const defaultBranch = defaultCard.slice(0, defaultCard.indexOf("  return online ? ("))
+
+  assert.doesNotMatch(defaultBranch, /运行正常/)
+  assert.match(defaultBranch, /!online &&/)
+  assert.match(defaultBranch, /<DefaultTransferMetric[\s\S]*direction="up"[\s\S]*total=\{net_out_transfer\}/)
+  assert.match(defaultBranch, /<DefaultTransferMetric[\s\S]*direction="down"[\s\S]*total=\{net_in_transfer\}/)
+  assert.match(defaultBranch, /showTotal=\{showNetTransfer\}/)
+  assert.match(defaultBranch, /grid w-full grid-cols-4 items-center gap-2 sm:gap-4/)
+  assert.match(defaultBranch, /serverCard\.load/)
+  assert.match(defaultBranch, /percent=\{Math\.min\(100, Number\(load_1\) \* 100\)\}/)
+  assert.match(defaultBranch, /mt-1\.5 grid w-full grid-cols-2/)
+  assert.match(defaultBranch, /min-w-0 first:border-r first:border-border\/70/)
+  assert.doesNotMatch(defaultBranch, /min-w-0 px-1 first:border-r|md:px-5/)
+  assert.match(defaultBranch, /whitespace-nowrap text-\[11px\] tabular-nums text-muted-foreground/)
+  assert.match(defaultBranch, /flex cursor-pointer flex-col px-3\.5 py-3/)
+  assert.match(defaultBranch, /border-b border-border\/70 pb-1\.5/)
+  assert.match(defaultBranch, /flex w-full min-w-0 flex-col pt-1\.5/)
+  assert.match(defaultBranch, /mt-1\.5[\s\S]*<ServerLatencySummary/)
+  assert.match(defaultBranch, /mt-1\.5[\s\S]*<TrafficBar/)
+  assert.match(defaultBranch, /mt-1\.5 flex w-full min-w-0 flex-wrap items-center/)
+  assert.doesNotMatch(defaultBranch, /gap-2 p-3|border-border\/70 pb-2|gap-y-2 pt-0\.5/)
+  assert.doesNotMatch(defaultBranch, /sm:!grid-cols|col-span-3/)
+  assert.match(defaultBranch, /<BillingInfo[\s\S]*compact[\s\S]*stacked/)
+  assert.match(defaultBranch, /capsuleDensity="dense"/)
+  assert.doesNotMatch(defaultBranch, /compactTextSize/)
+  assert.doesNotMatch(defaultBranch, /\[&_\.font-semibold\]|\[&_span\]/)
+  assert.match(defaultBranch, /ml-auto shrink-0[\s\S]*<PlanInfo/)
+  assert.doesNotMatch(defaultBranch, /serverCard\.upload"\)}:\{formatBytes\(net_out_transfer\)\}/)
+  assert.doesNotMatch(defaultBranch, /serverCard\.download"\)}:\{formatBytes\(net_in_transfer\)\}/)
 })

@@ -7,6 +7,7 @@ import type { HomeLatencySummary } from "@/lib/home-latency"
 import { GetFontLogoClass, GetOsName, MageMicrosoftWindows } from "@/lib/logo-class"
 import { cn, calcTrafficUsed, formatNezhaInfo, parsePublicNote } from "@/lib/utils"
 import { NezhaServer } from "@/types/nezha-api"
+import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/20/solid"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
@@ -15,13 +16,75 @@ import BillingInfo from "./billingInfo"
 import { Badge } from "./ui/badge"
 import { Card } from "./ui/card"
 
+function formatRate(megabytesPerSecond: number): string {
+  if (megabytesPerSecond >= 1024) return `${(megabytesPerSecond / 1024).toFixed(2)} G/s`
+  if (megabytesPerSecond >= 1) return `${megabytesPerSecond.toFixed(2)} M/s`
+  return `${(megabytesPerSecond * 1024).toFixed(2)} K/s`
+}
+
+function DefaultResourceMetric({ label, value, percent }: { label: string; value: string; percent: number }) {
+  return (
+    <div className="min-w-0">
+      <p className="truncate text-xs text-muted-foreground">{label}</p>
+      <div className="truncate text-xs font-semibold tabular-nums">{value}</div>
+      <ServerUsageBar value={percent} />
+    </div>
+  )
+}
+
+function DefaultTransferMetric({
+  direction,
+  label,
+  rate,
+  total,
+  showTotal,
+}: {
+  direction: "up" | "down"
+  label: string
+  rate: number
+  total: number
+  showTotal: boolean
+}) {
+  const Icon = direction === "up" ? ArrowUpIcon : ArrowDownIcon
+
+  return (
+    <div className="min-w-0 first:border-r first:border-border/70">
+      <div className={cn("min-w-0", direction === "up" ? "pr-3" : "pl-3")}>
+        <div className="flex min-w-0 items-end justify-between gap-2">
+          <div className="flex shrink-0 items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+            <Icon className="size-3.5 shrink-0" />
+            <span className="leading-none">{label}</span>
+          </div>
+          {showTotal && <span className="shrink-0 whitespace-nowrap text-[11px] tabular-nums text-muted-foreground">累计 {formatBytes(total)}</span>}
+        </div>
+        <div className="mt-1 truncate pl-1 text-sm font-semibold tabular-nums">{formatRate(rate)}</div>
+      </div>
+    </div>
+  )
+}
+
 export default function ServerCard({ now, serverInfo, latencySummary }: { now: number; serverInfo: NezhaServer; latencySummary?: HomeLatencySummary }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { name, country_code, online, cpu, up, down, mem, stg, uptime, net_in_transfer, net_out_transfer, public_note, platform, traffic_limit, traffic_limit_type, traffic_reset_day } = formatNezhaInfo(
-    now,
-    serverInfo,
-  )
+  const {
+    name,
+    country_code,
+    online,
+    cpu,
+    up,
+    down,
+    mem,
+    stg,
+    uptime,
+    load_1,
+    net_in_transfer,
+    net_out_transfer,
+    public_note,
+    platform,
+    traffic_limit,
+    traffic_limit_type,
+    traffic_reset_day,
+  } = formatNezhaInfo(now, serverInfo)
 
   const cardClick = () => {
     sessionStorage.setItem("fromMainPage", "true")
@@ -48,12 +111,12 @@ export default function ServerCard({ now, serverInfo, latencySummary }: { now: n
 
     return (
       <Card
-        className={cn("flex cursor-pointer flex-col gap-3 p-3 transition-colors hover:bg-accent/50 md:px-5", {
+        className={cn("flex cursor-pointer flex-col px-3.5 py-3 transition-colors hover:bg-accent/50", {
           "bg-card/70": customBackgroundImage,
         })}
         onClick={cardClick}
       >
-        <section className="flex w-full items-start justify-between gap-3 border-b border-border/70 pb-3">
+        <section className="flex w-full items-start justify-between gap-3 border-b border-border/70 pb-1.5">
           <div className="grid min-w-0 items-center gap-x-3 [grid-template-columns:auto_minmax(0,1fr)]">
             <div className="flex shrink-0 items-center gap-2">
               <span
@@ -69,98 +132,98 @@ export default function ServerCard({ now, serverInfo, latencySummary }: { now: n
               <p className="truncate text-[10px] text-muted-foreground">
                 {systemName} · {online ? `${t("serverCard.uptime")} ${uptimeValue}` : "已离线"}
               </p>
-              {parsedData?.billingDataMod && (
-                <BillingInfo parsedData={parsedData} showProgress={!disableRemainingDaysBar} compact />
-              )}
             </div>
           </div>
-          <span
-            className={cn(
-              "shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold",
-              online
-                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
-                : "bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300",
-            )}
-          >
-            {online ? "运行正常" : "已离线"}
-          </span>
+          {!online && (
+            <span className="shrink-0 rounded-full bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 dark:bg-red-950/50 dark:text-red-300">
+              已离线
+            </span>
+          )}
         </section>
 
         {online && (
-          <div className="flex w-full min-w-0 flex-col gap-2">
-            <section className="grid w-full grid-cols-5 items-center gap-2 sm:gap-4">
-              <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">CPU</p>
-                <div className="truncate text-xs font-semibold">{cpu.toFixed(2)}%</div>
-                <ServerUsageBar value={cpu} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">{t("serverCard.mem")}</p>
-                <div className="truncate text-xs font-semibold">{mem.toFixed(2)}%</div>
-                <ServerUsageBar value={mem} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">{t("serverCard.stg")}</p>
-                <div className="truncate text-xs font-semibold">{stg.toFixed(2)}%</div>
-                <ServerUsageBar value={stg} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">{t("serverCard.upload")}</p>
-                <div className="truncate text-xs font-semibold">
-                  {up >= 1024 ? `${(up / 1024).toFixed(2)}G/s` : up >= 1 ? `${up.toFixed(2)}M/s` : `${(up * 1024).toFixed(2)}K/s`}
-                </div>
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">{t("serverCard.download")}</p>
-                <div className="truncate text-xs font-semibold">
-                  {down >= 1024 ? `${(down / 1024).toFixed(2)}G/s` : down >= 1 ? `${down.toFixed(2)}M/s` : `${(down * 1024).toFixed(2)}K/s`}
-                </div>
-              </div>
-            </section>
-            <ServerLatencySummary summary={latencySummary} />
-            {traffic_limit > 0 && (window as unknown as Record<string, unknown>).ShowTrafficBar !== false && (
-              <TrafficBar
-                used={calcTrafficUsed(net_out_transfer, net_in_transfer, traffic_limit_type)}
-                limit={traffic_limit}
-                resetDay={traffic_reset_day}
-                limitType={traffic_limit_type}
+          <div className="flex w-full min-w-0 flex-col pt-1.5">
+            <section className="grid w-full grid-cols-4 items-center gap-2 sm:gap-4">
+              <DefaultResourceMetric label="CPU" value={`${cpu.toFixed(2)}%`} percent={cpu} />
+              <DefaultResourceMetric label={t("serverCard.mem")} value={`${mem.toFixed(2)}%`} percent={mem} />
+              <DefaultResourceMetric label={t("serverCard.stg")} value={`${stg.toFixed(2)}%`} percent={stg} />
+              <DefaultResourceMetric
+                label={t("serverCard.load", { defaultValue: "负载" })}
+                value={String(load_1)}
+                percent={Math.min(100, Number(load_1) * 100)}
               />
+            </section>
+            <section className="mt-1.5 grid w-full grid-cols-2">
+              <DefaultTransferMetric
+                direction="up"
+                label={t("serverCard.upload")}
+                rate={up}
+                total={net_out_transfer}
+                showTotal={showNetTransfer}
+              />
+              <DefaultTransferMetric
+                direction="down"
+                label={t("serverCard.download")}
+                rate={down}
+                total={net_in_transfer}
+                showTotal={showNetTransfer}
+              />
+            </section>
+            {latencySummary && (
+              <div className="mt-1.5">
+                <ServerLatencySummary summary={latencySummary} />
+              </div>
             )}
-            {(showNetTransfer || parsedData?.planDataMod) && (
-              <section className="flex w-full flex-wrap items-center justify-between gap-x-3 gap-y-2 pt-0.5">
-                {showNetTransfer && (
-                  <div
-                    className={cn(
-                      "grid min-w-[240px] grid-cols-2 items-center gap-1",
-                      parsedData?.planDataMod ? "flex-1 basis-[42%] sm:max-w-[44%]" : "w-full",
-                    )}
-                  >
-                    <Badge
-                      variant="secondary"
-                      className="min-w-0 w-full items-center justify-center text-nowrap rounded-[8px] border-muted-50 text-[11px] shadow-md shadow-neutral-200/30 dark:shadow-none"
-                    >
-                      {t("serverCard.upload")}:{formatBytes(net_out_transfer)}
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="min-w-0 w-full items-center justify-center text-nowrap rounded-[8px] text-[11px] shadow-md shadow-neutral-200/30 dark:shadow-none"
-                    >
-                      {t("serverCard.download")}:{formatBytes(net_in_transfer)}
-                    </Badge>
-                  </div>
-                )}
-                {parsedData?.planDataMod && (
-                  <div className="ml-auto shrink-0">
-                    <PlanInfo parsedData={parsedData} />
-                  </div>
-                )}
+            {traffic_limit > 0 && (window as unknown as Record<string, unknown>).ShowTrafficBar !== false && (
+              <div className="mt-1.5">
+                <TrafficBar
+                  used={calcTrafficUsed(net_out_transfer, net_in_transfer, traffic_limit_type)}
+                  limit={traffic_limit}
+                  resetDay={traffic_reset_day}
+                  limitType={traffic_limit_type}
+                />
+              </div>
+            )}
+            {(parsedData?.billingDataMod || parsedData?.planDataMod) && (
+              <section className="mt-1.5 flex w-full min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                <div className="min-w-0">
+                  {parsedData?.billingDataMod && (
+                    <BillingInfo
+                      parsedData={parsedData}
+                      showProgress={!disableRemainingDaysBar}
+                      compact
+                      stacked
+                      capsuleDensity="dense"
+                    />
+                  )}
+                </div>
+                <div className="ml-auto shrink-0">{parsedData?.planDataMod && <PlanInfo parsedData={parsedData} />}</div>
               </section>
             )}
           </div>
         )}
 
-        {!online && <ServerLatencySummary summary={latencySummary} />}
-        {!online && parsedData?.planDataMod && <PlanInfo parsedData={parsedData} />}
+        {!online && latencySummary && (
+          <div className="mt-1.5">
+            <ServerLatencySummary summary={latencySummary} />
+          </div>
+        )}
+        {!online && (parsedData?.billingDataMod || parsedData?.planDataMod) && (
+          <section className="mt-1.5 flex w-full min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
+            <div className="min-w-0">
+              {parsedData?.billingDataMod && (
+                <BillingInfo
+                  parsedData={parsedData}
+                  showProgress={!disableRemainingDaysBar}
+                  compact
+                  stacked
+                  capsuleDensity="dense"
+                />
+              )}
+            </div>
+            <div className="ml-auto shrink-0">{parsedData?.planDataMod && <PlanInfo parsedData={parsedData} />}</div>
+          </section>
+        )}
       </Card>
     )
   }

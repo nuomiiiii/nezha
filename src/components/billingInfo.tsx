@@ -9,11 +9,13 @@ export default function BillingInfo({
   showProgress = true,
   compact = false,
   stacked = false,
+  capsuleDensity = "default",
 }: {
   parsedData: PublicNoteData
   showProgress?: boolean
   compact?: boolean
   stacked?: boolean
+  capsuleDensity?: "default" | "dense"
 }) {
   const { t } = useTranslation()
   if (!parsedData || !parsedData.billingDataMod) {
@@ -48,6 +50,8 @@ export default function BillingInfo({
   }
 
   if (compact) {
+    const capsuleTextClass = "text-[10px]"
+    const capsuleGapClass = capsuleDensity === "dense" ? "gap-0.5" : "gap-1"
     const hasPrice = billingData.amount && billingData.amount !== "0" && billingData.amount !== "-1"
     const remainingTone = getBillingRemainingTone(daysLeftObject.days, isNeverExpire)
     const remainingLabel =
@@ -60,24 +64,36 @@ export default function BillingInfo({
 
     if (stacked) {
       return (
-        <div className="shrink-0 rounded-full border border-border/70 bg-muted/45 px-3 py-1.5">
-          <div className="flex min-h-4 items-baseline justify-end gap-1 whitespace-nowrap">
+        <div
+          className={cn(
+            "shrink-0 rounded-full border border-border/70 bg-muted/45",
+            capsuleDensity === "dense" ? "px-2.5 py-0.5" : "px-3 py-1.5",
+          )}
+        >
+          <div
+            className={cn(
+              "flex justify-end whitespace-nowrap",
+              capsuleDensity === "dense" ? "h-4 items-center" : "min-h-4 items-baseline",
+              capsuleGapClass,
+            )}
+          >
             {hasPrice ? (
               <>
-                <span className="text-[10px] text-muted-foreground">{t("billingInfo.price")}</span>
-                <span className="truncate text-[10px] font-semibold leading-4 text-foreground">{billingPrice}</span>
+                <span className={cn("text-muted-foreground", capsuleTextClass)}>{t("billingInfo.price")}</span>
+                <span className={cn("truncate font-semibold leading-4 text-foreground", capsuleTextClass)}>{billingPrice}</span>
               </>
             ) : billingData.amount === "-1" ? (
               <>
-                <span className="text-[10px] text-muted-foreground">{t("billingInfo.price")}</span>
-                <span className="text-[10px] font-semibold leading-4 text-emerald-500 dark:text-emerald-400">{t("billingInfo.free")}</span>
+                <span className={cn("text-muted-foreground", capsuleTextClass)}>{t("billingInfo.price")}</span>
+                <span className={cn("font-semibold leading-4 text-emerald-500 dark:text-emerald-400", capsuleTextClass)}>{t("billingInfo.free")}</span>
               </>
             ) : null}
-            <span className="mx-0.5 text-[10px] text-border">/</span>
-            <span className="text-[10px] text-muted-foreground">{remainingLabel}</span>
+            <span className={cn("text-border", capsuleTextClass, capsuleDensity === "dense" ? "mx-0" : "mx-0.5")}>/</span>
+            <span className={cn("text-muted-foreground", capsuleTextClass)}>{remainingLabel}</span>
             <span
               className={cn(
-                "truncate text-[10px] font-semibold leading-4",
+                "truncate font-semibold leading-4",
+                capsuleTextClass,
                 remainingTone === "danger" ? "text-red-500 dark:text-red-400" : "text-emerald-500 dark:text-emerald-400",
               )}
             >
