@@ -23,7 +23,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
 
     try {
       const rpc2 = SharedClient()
-      const [nodes, status] = await Promise.all([getKomariNodes(), rpc2.call("common:getNodesLatestStatus")])
+      const [nodes, status] = await Promise.all([getKomariNodes(true), rpc2.call("common:getNodesLatestStatus")])
       if (!activeRef.current) return
 
       const message = { data: JSON.stringify(komariToNezhaWebsocketResponse(status, nodes)) }

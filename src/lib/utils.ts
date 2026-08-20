@@ -1,6 +1,7 @@
 import { SharedClient } from "@/hooks/use-rpc2"
 import { detectCanadianDollarCurrency, getStaticCurrencyLabel } from "@/lib/currency-label"
 import { formatBytes } from "@/lib/format"
+import { leftoverStatusUuids, listKomariNodes, resolveKomariServerEntries } from "@/lib/komari-node-list"
 import { uuidToNumber } from "@/lib/server-route"
 import { NezhaServer, NezhaWebsocketResponse } from "@/types/nezha-api"
 import { type ClassValue, clsx } from "clsx"
@@ -704,87 +705,32 @@ function buildPublicNoteFromNode(server: any, existingPublicNote?: string): stri
 
 export const komariToNezhaWebsocketResponse = (data: any, nodes: Record<string, any>): NezhaWebsocketResponse => {
   // 直接使用本轮已完成的节点请求，避免异步缓存回调晚于状态转换。
-  km_servers_cache = Object.values(nodes || {})
+  km_servers_cache = listKomariNodes(nodes)
 
-  // 如果还没有缓存，先按 data 渲染，避免首次为空
+  // 节点表为空时不要用 live status 凑卡片，否则删除后残留的 agent 状态会变成幽灵卡片。
   if (!km_servers_cache || km_servers_cache.length === 0) {
     return {
       now: Date.now(),
       servers: [],
     }
-    // const servers: any[] = Object.entries(data || {}).reduce((acc: any[], [uuid, status]: [string, any]) => {
-    //   const host = {
-    //     platform: status.os || "",
-    //     platform_version: status.kernel_version || "",
-    //     cpu: status.cpu_name ? [status.cpu_name] : [],
-    //     gpu: status.gpu_name ? [status.gpu_name] : [],
-    //     mem_total: status.ram_total || 0,
-    //     disk_total: status.disk_total || 0,
-    //     swap_total: status.swap_total || 0,
-    //     arch: status.arch || "",
-    //     boot_time: new Date(status.time).getTime() / 1000 - (status.uptime || 0),
-    //     version: "",
-    //   }
-
-    //   const state = {
-    //     cpu: status.cpu || 0,
-    //     mem_used: status.ram || 0,
-    //     swap_used: status.swap || 0,
-    //     disk_used: status.disk || 0,
-    //     net_in_transfer: status.net_total_down || 0,
-    //     net_out_transfer: status.net_total_up || 0,
-    //     net_in_speed: status.net_in || 0,
-    //     net_out_speed: status.net_out || 0,
-    //     uptime: status.uptime || 0,
-    //     load_1: status.load || 0,
-    //     load_5: status.load5 || 0,
-    //     load_15: status.load15 || 0,
-    //     tcp_conn_count: status.connections || 0,
-    //     udp_conn_count: status.connections_udp || 0,
-    //     process_count: status.process || 0,
-    //     temperatures: status.temp > 0 ? [{ Name: "CPU", Temperature: status.temp }] : [],
-    //     gpu: typeof status.gpu === "number" ? [status.gpu] : [],
-    //   }
-
-    //   acc.push({
-    //     id: uuidToNumber(uuid),
-    //     name: status.name || uuid,
-    //     public_note: "",
-    //     last_active: status.time,
-    //     country_code: status.region ? countryFlagToCode(status.region) : "",
-    //     display_index: 0,
-    //     host,
-    //     state,
-    //   })
-    //   return acc
-    // }, [])
-
-    // return {
-    //   now: Date.now(),
-    //   servers,
-    // }
   }
 
-  // 按缓存列表展示；如果 data 中没有该 uuid，则视为离线
-  const statusMap = new Map<string, any>(Object.entries(data || {}))
-  // Komari 的 getNodesLatestStatus 对**离线但仍注册**的服务器会以 online:false 返回,
-  // 只有**被后端删除**的服务器才会从该接口完全消失。因此当 statusMap 非空时,
-  // 把缓存中存在但 statusMap 里没有的 UUID 直接过滤掉,删服务器可以在下一次 WS tick(≤2 秒)
-  // 立即从前端消失,而不必等 km_servers_cache 的 2 分钟 TTL 刷新;
-  // statusMap 为空时(初次加载或瞬时错误)保留全部缓存,避免误删。
-  const hasStatusData = statusMap.size > 0
-  const liveCache = hasStatusData
-    ? km_servers_cache.filter((server: any) => statusMap.has(server.uuid))
-    : km_servers_cache
-  const servers: any[] = liveCache.map((server: any) => {
-    const uuid = server.uuid
-    const status = statusMap.get(uuid)
+  const entries = resolveKomariServerEntries(nodes, data)
+  const leftover = leftoverStatusUuids(
+    entries.map((entry) => entry.uuid),
+    data,
+  )
+  // 状态里出现、节点表还没有的 UUID：不渲染，只刷新节点表。新机器下一轮出现，已删除机器不会变成乱码卡片。
+  if (leftover.length > 0) {
+    getKomariNodes(true).catch(() => {
+      // 下一轮轮询继续尝试刷新节点表
+    })
+  }
+
+  const servers: any[] = entries.map((entry) => {
+    const { uuid, node: server, status } = entry
     const countryCode = server?.region ? countryFlagToCode(String(server.region)) : ""
     const trafficResetDay = resolveTrafficResetDay(server)
-    // 已处理的 uuid 从映射中移除，避免后续增补阶段重复添加
-    if (statusMap.has(uuid)) {
-      statusMap.delete(uuid)
-    }
 
     const bootTime = status ? new Date(status.time).getTime() / 1000 - (status.uptime || 0) : 0
 
@@ -861,14 +807,6 @@ export const komariToNezhaWebsocketResponse = (data: any, nodes: Record<string, 
     }
   })
 
-  // statusMap 剩余项是后端状态里出现、但节点表缓存里没有的 UUID。
-  // 不再直接追加这类“无元数据机器”，否则删除节点后旧 agent 状态会变成乱码卡片。
-  if (statusMap.size > 0) {
-    getKomariNodes(true).catch(() => {
-      // 下一轮轮询继续尝试刷新节点表
-    })
-  }
-
   return {
     now: Date.now(),
     servers,
@@ -877,9 +815,20 @@ export const komariToNezhaWebsocketResponse = (data: any, nodes: Record<string, 
 
 let __nodesCache__ : any = null
 let __nodesCachePromise__: Promise<any> | null = null
+let __nodesCacheTimer__: ReturnType<typeof setTimeout> | null = null
+const NODES_CACHE_TTL_MS = 2000
+
+function clearKomariNodesCache() {
+  __nodesCache__ = null
+  if (__nodesCacheTimer__) {
+    clearTimeout(__nodesCacheTimer__)
+    __nodesCacheTimer__ = null
+  }
+}
+
 export const getKomariNodes = async (force = false) => {
   if (force) {
-    __nodesCache__ = null
+    clearKomariNodesCache()
   }
 
   // 命中缓存，直接返回
@@ -897,15 +846,18 @@ export const getKomariNodes = async (force = false) => {
     .call("common:getNodes")
     .then((res) => {
       __nodesCache__ = res
-      // 设置 TTL 到期清理
-      setTimeout(() => {
+      if (__nodesCacheTimer__) {
+        clearTimeout(__nodesCacheTimer__)
+      }
+      __nodesCacheTimer__ = setTimeout(() => {
         __nodesCache__ = null
-      }, 2 * 60 * 1000) // 2 minutes cache
+        __nodesCacheTimer__ = null
+      }, NODES_CACHE_TTL_MS)
       return __nodesCache__
     })
     .catch((err) => {
       // 失败不污染缓存，下次可重试
-      __nodesCache__ = null
+      clearKomariNodesCache()
       throw err
     })
     .finally(() => {
